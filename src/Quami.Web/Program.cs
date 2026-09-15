@@ -1,6 +1,11 @@
 using Quami.Web.Components;
 
+using Quami.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Veri katmanı (DbContext, Npgsql, snake_case). ITenantContext kaydı adım 6'da.
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

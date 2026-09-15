@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
 Son güncelleme: 15 Eylül 2026
-Son commit: `b3fc64a` iskelet: çözüm yapısı ve proje referansları
+Son commit: adım 4: migration ve veritabanı (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -10,7 +10,7 @@ yerden devam eder. Her adım bitince güncellenir.
 
 - .NET SDK 10.0.401 (`/usr/local/share/dotnet`)
 - PostgreSQL 18.6, Homebrew, `brew services` ile çalışıyor, yerel bağlantı trust,
-  `psql` yolu `~/.zshrc` içinde. Veritabanı `quami_dev` HENÜZ oluşturulmadı (adım 4).
+  `psql` yolu `~/.zshrc` içinde. Veritabanı `quami_dev` oluşturuldu (adım 4), 7 tablo.
 - Docker yok.
 
 ## İskelet adımları
@@ -20,8 +20,8 @@ yerden devam eder. Her adım bitince güncellenir.
 | 1 | Çözüm ve proje iskeleti, .gitignore, README | BİTTİ |
 | 2 | Domain sınıfları: Tenant, Module, MenuGroup, TenantModule, AuditLog, User | BİTTİ (commit bekliyor) |
 | 3 | DbContext, global query filter, SaveChanges override (TenantId + audit log) | BİTTİ (commit bekliyor) |
-| 4 | İlk migration ve veritabanı oluşturma | SIRADA |
-| 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | bekliyor |
+| 4 | İlk migration ve veritabanı oluşturma | BİTTİ |
+| 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | SIRADA |
 | 6 | Kimlik ve oturum, ITenantContext | bekliyor |
 | 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | bekliyor |
 | 8 | Boş dashboard sayfası | bekliyor |
@@ -131,6 +131,48 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
   açıkça sabitlendi.
 - Adım 4 için not: migration üretimi ITenantContext ister; tasarım zamanı için
   `IDesignTimeDbContextFactory` veya boş bir NullTenantContext gerekecek.
+
+## Adım 4'te üretilenler ve kararlar
+
+- `dotnet-ef` 10.0.12 yerel araç olarak `.config/dotnet-tools.json` içinde
+  (global değil; yeni makinede `dotnet tool restore`).
+- `Persistence/DesignTimeTenantContext.cs`: boş bağlam (kiracı yok, muafiyet yok).
+  Migration üretimi ve ileride arka plan işleri için. İstek hattında kullanılmaz.
+- `Persistence/QuamiDbContextFactory.cs`: IDesignTimeDbContextFactory. Bağlantı
+  `QUAMI_DB` ortam değişkeninden, yoksa yerel varsayılan
+  `Host=localhost;Port=5432;Database=quami_dev;Username=<kullanici>` (trust).
+- Migration: `Persistence/Migrations/20260915130601_InitialCreate`. Veritabanı
+  `quami_dev` `dotnet ef database update` ile oluştu. Tablolar: tenants,
+  menu_groups, modules, tenant_modules, users, audit_logs, __EFMigrationsHistory.
+  Kısmi benzersiz indeksler (`WHERE is_deleted = false`) ve jsonb sütunlar doğrulandı.
+- Web: `appsettings.Development.json` içine `ConnectionStrings:QuamiDb`,
+  `Program.cs` içine `AddInfrastructure`. ITenantContext henüz kayıtlı değil;
+  DbContext çözülürse hata verir. Adım 5 seed'i için geçici kayıt gerekecek,
+  kalıcı uygulama adım 6'da.
+## Adım 5 için Bülent'in notları
+
+Bülent üç başlık verdi; ayrıntısı bu oturumda yazılı değil, aşağıdaki açılım
+Claude'un anladığı haldir. Adım 5'e başlamadan Bülent'e teyit ettirin.
+
+1. **Sabit Guid kimlikleri.** Menü grubu ve modül kayıtlarının Id'leri kodda
+   sabit (hard-coded) Guid olsun, çalıştırmada üretilmesin. Böylece her ortamda
+   (lokal, test, canlı) aynı modül aynı Id'yi taşır; lisans kayıtları ve
+   ileride veri taşıma ortamlar arasında tutarlı kalır.
+2. **Tekrar çalıştırılabilir ama kiracı verisine dokunmayan seed.** Seed her
+   açılışta çalışabilir (idempotent): sistem geneli kayıtları (MenuGroups,
+   Modules) koda göre ekler/günceller. Kiracıya ait verilere (Tenants, Users,
+   TenantModules) ise yalnızca ilk kez, hiç kayıt yokken dokunur; var olan
+   kiracı verisini asla değiştirmez veya silmez. Örnek kiracı sadece boş
+   veritabanında oluşturulur.
+3. **ENV/FOOD lisanslanmasın.** Çevre ve Gıda güvenliği modülleri
+   `IsAvailable = false` ile "yakında" olarak seed'lenir; örnek kiracıya
+   TenantModule kaydı açılmaz. IModuleLicenseService de hazır olmayan modülü
+   hiçbir kiracı için etkin saymamalı.
+
+Planlanan akış: uygulama açılışında migration uygula → sistem geneli seed →
+(veritabanı boşsa) örnek kiracı + hazır modüllerin lisansları. Seed sırasında
+ITenantContext için geçici olarak DesignTimeTenantContext kaydı gerekir;
+kalıcı uygulama adım 6'da.
 
 ## Açık kararlar (Bülent'e ait)
 

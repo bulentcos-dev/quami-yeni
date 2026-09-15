@@ -46,6 +46,14 @@ Bağımlılık yönü: `Web`/`Api` → `Infrastructure` → `Application` → `D
 Gereksinimler: .NET SDK 10, PostgreSQL 18 (yerelde çalışır durumda, veritabanı adı `quami_dev`).
 
 ```
+dotnet tool restore
+dotnet ef database update --project src/Quami.Infrastructure
 dotnet build
 dotnet run --project src/Quami.Web
 ```
+
+Bağlantı dizesi `src/Quami.Web/appsettings.Development.json` içinde
+(`ConnectionStrings:QuamiDb`). `dotnet ef` komutları için `QUAMI_DB` ortam
+değişkeni verilebilir; yoksa yerel varsayılan kullanılır.
+
+Yeni migration: `dotnet ef migrations add <Ad> --project src/Quami.Infrastructure --output-dir Persistence/Migrations`
