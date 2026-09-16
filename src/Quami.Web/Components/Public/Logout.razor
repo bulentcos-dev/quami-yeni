@@ -1,0 +1,28 @@
+@page "/logout"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Endpoints
+@using Quami.Application.Abstractions
+@attribute [AllowAnonymous]
+@* Statik render zorunlu: oturum çerezi HTTP yanıtında silinir. *@
+@attribute [ExcludeFromInteractiveRouting]
+@layout Quami.Web.Components.Layout.BareLayout
+@inject IAuthenticationProvider AuthenticationProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Çıkış — Quami</PageTitle>
+
+<h1>Çıkış</h1>
+
+@* Çıkış POST ile yapılır: GET bağlantısı başka sitelerden tetiklenebilir. *@
+<EditForm Model="this" FormName="logout" OnValidSubmit="SignOutAsync">
+    <p>Oturumu kapatmak istiyor musunuz?</p>
+    <button type="submit">Çıkış yap</button>
+</EditForm>
+
+@code {
+    private async Task SignOutAsync()
+    {
+        await AuthenticationProvider.SignOutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

@@ -1,0 +1,106 @@
+@page "/login"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Endpoints
+@using Quami.Application.Abstractions
+@attribute [AllowAnonymous]
+@* Statik render zorunlu: oturum çerezi yalnızca HTTP yanıtında yazılabilir,
+   etkileşimli devre içinde yazılamaz. *@
+@attribute [ExcludeFromInteractiveRouting]
+@layout Quami.Web.Components.Layout.BareLayout
+@inject IAuthenticationProvider AuthenticationProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Giriş — Quami</PageTitle>
+
+<h1>Quami</h1>
+
+<EditForm Model="Input" FormName="login" OnValidSubmit="SignInAsync">
+    <DataAnnotationsValidator />
+
+    @if (_message is not null)
+    {
+        <p role="alert">@_message</p>
+    }
+
+    <p>
+        <label for="tenant">Kurum kodu</label>
+        <InputText id="tenant" @bind-Value="Input.TenantShortName" autocomplete="organization" />
+        <ValidationMessage For="() => Input.TenantShortName" />
+    </p>
+    <p>
+        <label for="user">Kullanıcı adı</label>
+        <InputText id="user" @bind-Value="Input.UserName" autocomplete="username" />
+        <ValidationMessage For="() => Input.UserName" />
+    </p>
+    <p>
+        <label for="pass">Parola</label>
+        <InputText id="pass" type="password" @bind-Value="Input.Password" autocomplete="current-password" />
+        <ValidationMessage For="() => Input.Password" />
+    </p>
+    <p>
+        <label>
+            <InputCheckbox @bind-Value="Input.RememberMe" /> Beni hatırla
+        </label>
+    </p>
+
+    <button type="submit">Giriş</button>
+</EditForm>
+
+@code {
+    private string? _message;
+
+    [SupplyParameterFromForm]
+    private LoginInput Input { get; set; } = default!;
+
+    // Form gönderiminde null gelebildiği için başlangıç değeri burada verilir.
+    protected override void OnInitialized() => Input ??= new();
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    private string? ReturnUrl { get; set; }
+
+    private async Task SignInAsync()
+    {
+        var status = await AuthenticationProvider.SignInWithPasswordAsync(
+            Input.TenantShortName, Input.UserName, Input.Password, Input.RememberMe);
+
+        if (status == SignInStatus.Success)
+        {
+            // forceLoad: çerez yeni yazıldı, tam sayfa yüklemesi gerekiyor.
+            Navigation.NavigateTo(SafeReturnUrl(), forceLoad: true);
+            return;
+        }
+
+        _message = status switch
+        {
+            // Hangi bilginin yanlış olduğu söylenmez: kullanıcı adı taraması engellenir.
+            SignInStatus.InvalidCredentials => "Kurum kodu, kullanıcı adı veya parola hatalı.",
+            SignInStatus.LockedOut => "Hesap art arda hatalı deneme nedeniyle geçici olarak kilitlendi. Bir süre sonra tekrar deneyin.",
+            SignInStatus.NotAllowed => "Bu hesapla giriş yapılamıyor. Kurum yöneticinize başvurun.",
+            SignInStatus.RequiresTwoFactor => "İki adımlı doğrulama gerekiyor.",
+            _ => "Giriş yapılamadı."
+        };
+    }
+
+    /// <summary>Açık yönlendirme (open redirect) koruması: yalnızca site içi adresler.</summary>
+    private string SafeReturnUrl()
+    {
+        var url = ReturnUrl;
+        if (string.IsNullOrWhiteSpace(url)) return "/";
+        if (!url.StartsWith('/') || url.StartsWith("//") || url.StartsWith("/\\")) return "/";
+        return url;
+    }
+
+    private sealed class LoginInput
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Kurum kodu gerekli.")]
+        public string TenantShortName { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Kullanıcı adı gerekli.")]
+        public string UserName { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Parola gerekli.")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+}

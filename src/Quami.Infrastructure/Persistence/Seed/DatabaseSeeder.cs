@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Quami.Domain.Common;
 using Quami.Domain.Entities;
 using Quami.Domain.Enums;
+using Quami.Infrastructure.Identity;
 
 namespace Quami.Infrastructure.Persistence.Seed;
 
@@ -36,8 +38,14 @@ public static class DatabaseSeeder
     /// Geliştirmede true. Test/canlıda migration'ı dağıtım adımı uygular,
     /// uygulama açılışı değil.
     /// </param>
+    /// <param name="sampleUserPassword">
+    /// Doluysa örnek kullanıcıya bu parolayla bir kimlik kaydı açılır.
+    /// YALNIZCA GELİŞTİRMEDE verilir; test ve canlıda null geçilir, orada
+    /// kullanıcılar elle veya kurulum adımıyla açılır.
+    /// </param>
     public static async Task MigrateAndSeedAsync(
-        IServiceProvider services, bool applyMigrations, CancellationToken cancellationToken = default)
+        IServiceProvider services, bool applyMigrations, string? sampleUserPassword = null,
+        CancellationToken cancellationToken = default)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<QuamiDbContext>();
@@ -69,6 +77,9 @@ public static class DatabaseSeeder
 
         if (await SeedSampleTenantAsync(db, cancellationToken))
             logger.LogInformation("Boş veritabanı: örnek kiracı oluşturuldu.");
+
+        if (!string.IsNullOrEmpty(sampleUserPassword))
+            await EnsureSampleIdentityUserAsync(scope.ServiceProvider, db, sampleUserPassword, logger, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
     }
@@ -158,7 +169,7 @@ public static class DatabaseSeeder
             IsActive = true
         });
 
-        db.Users.Add(new User
+        db.BusinessUsers.Add(new User
         {
             Id = SeedIds.Sample.User,
             TenantId = SeedIds.Sample.Tenant,
@@ -184,6 +195,54 @@ public static class DatabaseSeeder
 
         await db.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Örnek kullanıcının kimlik kaydını (parola) açar. Yalnızca geliştirmede
+    /// çağrılır. Kayıt zaten varsa dokunulmaz — parola sıfırlanmaz.
+    /// </summary>
+    private static async Task EnsureSampleIdentityUserAsync(
+        IServiceProvider scopedServices, QuamiDbContext db, string password,
+        ILogger logger, CancellationToken cancellationToken)
+    {
+        var userManager = scopedServices.GetService<UserManager<QuamiIdentityUser>>();
+        if (userManager is null)
+            return; // Kimlik kayıtlı değil (ör. Api projesi): yapacak bir şey yok.
+
+        var businessUser = await db.BusinessUsers
+            .IgnoreQueryFilters([QuamiDbContext.TenantFilter])
+            .Include(u => u.Tenant)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == SeedIds.Sample.User, cancellationToken);
+
+        if (businessUser is null)
+            return;
+
+        var identityUserName = QuamiIdentityUser.ComposeUserName(
+            businessUser.Tenant.ShortName, businessUser.UserName);
+
+        if (await userManager.FindByNameAsync(identityUserName) is not null)
+            return;
+
+        var identityUser = new QuamiIdentityUser
+        {
+            Id = businessUser.Id, // İş kaydıyla aynı kimlik
+            UserName = identityUserName,
+            Email = businessUser.Email,
+            EmailConfirmed = true
+        };
+
+        var result = await userManager.CreateAsync(identityUser, password);
+        if (!result.Succeeded)
+        {
+            logger.LogWarning("Örnek kullanıcının kimlik kaydı açılamadı: {Errors}",
+                string.Join("; ", result.Errors.Select(e => e.Description)));
+            return;
+        }
+
+        logger.LogWarning(
+            "GELİŞTİRME: örnek kullanıcı '{UserName}' bilinen bir parolayla oluşturuldu. " +
+            "Bu hesap test ve canlı ortamda BULUNMAMALIDIR.", identityUserName);
     }
 
     /// <summary>Kodda duran bir kayıt silinmiş işaretliyse geri getirir.</summary>

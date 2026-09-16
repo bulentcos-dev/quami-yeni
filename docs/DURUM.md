@@ -22,8 +22,8 @@ yerden devam eder. Her adım bitince güncellenir.
 | 3 | DbContext, global query filter, SaveChanges override (TenantId + audit log) | BİTTİ |
 | 4 | İlk migration ve veritabanı oluşturma | BİTTİ |
 | 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | BİTTİ |
-| 6 | Kimlik ve oturum, ITenantContext | SIRADA |
-| 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | bekliyor |
+| 6 | Kimlik ve oturum, ITenantContext, kimlik olay günlüğü | BİTTİ |
+| 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | SIRADA |
 | 8 | Boş dashboard sayfası | bekliyor |
 | 9 | IFileStorage + Quami.Api iskeleti | bekliyor |
 | 10 | İlk commit | bekliyor (adım 1 ayrıca commit edildi) |
@@ -215,6 +215,125 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
 - Lisans servisi gerçek sorguyla sınandı: DOCS true, TASKS (elle kapatılmış)
   false, ENV (hazır değil) false, olmayan kod false, etkin modül sayısı 20.
   Sınama sonrası kiracı verisi elle eski haline getirildi.
+
+## Adım 6'da üretilenler ve kararlar
+
+### Kimlik
+- `Infrastructure/Identity/QuamiIdentityUser.cs`, `QuamiIdentityRole.cs`:
+  ASP.NET Core Identity kayıtları. Domain'deki `User` ile **aynı Id**yi paylaşır;
+  parola ve kilitlenme burada, iş bilgisi orada.
+- **Giriş adı `kullanıcıadı@KURUMKODU`** (ör. `admin@DEMO`). Sebep: Identity
+  kullanıcı adı genel olarak benzersiz olmalı, bizimki yalnızca kiracı içinde
+  benzersiz. Giriş ekranı üç alan ister: kurum kodu, kullanıcı adı, parola.
+  Tek alanlı (e-posta ile) girişe geçilecekse burası değişir.
+- `QuamiDbContext` artık `IdentityDbContext<...>`. Identity tabloları elle
+  snake_case adlara eşlendi (`identity_users`, `identity_roles`, ...): Identity
+  kendi tablo adlarını açıkça verdiği için adlandırma kuralı onlara işlemiyordu.
+- **Kendi kullanıcı kümemizin adı `BusinessUsers` oldu.** `Users` adı Identity'nin
+  kendi kümesiyle çakışıyor ve onu gizliyordu (CS0114). Tablo adı `users` olarak
+  sabitlendi, veritabanı değişmedi.
+- **Identity varlıkları denetim günlüğüne yazılmaz.** Denetim yalnızca
+  `BaseEntity` türevlerini kapsar; aksi halde parola özeti ve güvenlik damgası
+  JSON olarak `audit_logs` içine düşerdi. Sınandı: günlükte identity tablosu yok,
+  "password" geçen satır yok.
+  Kimlik olayları ayrı bir günlüğe yazılır (aşağıya bakın).
+
+### Soyutlama
+- `Application/Abstractions/IAuthenticationProvider.cs` + `SignInStatus`:
+  giriş ekranı yalnızca bunu bilir. Bugünkü uygulama `LocalAuthenticationProvider`
+  (kullanıcı adı/parola). SAML ve Entra ID ileride ikinci ve üçüncü uygulama
+  olarak eklenecek, ekran değişmeyecek.
+- Parola kontrolünden önce iş tarafı kontrol edilir: kurum aktif mi, kullanıcı
+  aktif mi. Hata mesajı hangi alanın yanlış olduğunu söylemez.
+
+### Oturum ve kiracı bağlamı
+- `Identity/CurrentUserTenantContext.cs`: `ITenantContext`in gerçek uygulaması.
+  Kiracı ve yetki bilgisini oturum biletindeki taleplerden okur. Bilet
+  `QuamiUserClaimsPrincipalFactory` ile üretilir; `quami:tenant_id` ve
+  `quami:is_system_admin` talepleri Domain kullanıcısından her seferinde tazelenir.
+- Oturum sahibi iki kaynaktan aranır: `IHttpContextAccessor` (istek hattı) ve
+  `AuthenticationStateProvider` (Blazor devresi). Devre içinde HttpContext yoktur,
+  bu yüzden ikisi de gerekli.
+- Çerez: `quami.auth`, HttpOnly, SameSite=Lax, 8 saat, kayan süre.
+  `returnUrl` parametre adı giriş ekranıyla hizalandı.
+
+### Ekranlar ve yetkilendirme
+- `Components/Public/` — oturum İSTEMEYEN sayfalar: Login, Logout, Error, NotFound.
+- `Components/Pages/` — oturum İSTEYEN sayfalar. `Pages/_Imports.razor` içindeki
+  `@attribute [Authorize]` sayesinde **yeni modül sayfası otomatik korumalı**;
+  tek tek yazmak gerekmez, unutulamaz.
+- Giriş ve çıkış sayfaları `[ExcludeFromInteractiveRouting]` ile statik render
+  edilir: oturum çerezi yalnızca HTTP yanıtında yazılabilir, etkileşimli devrede
+  yazılamaz. `App.razor` render kipini sayfaya göre seçer.
+- Çıkış POST ile yapılır (GET bağlantısı başka siteden tetiklenebilirdi).
+- Giriş sonrası dönüş adresi yalnızca site içi olabilir (açık yönlendirme koruması).
+
+### Geliştirme hesabı
+- Boş veritabanında `DEMO` kurumu, `admin` kullanıcısı ve **yalnızca
+  Development'ta** bir parola oluşur (`<GELISTIRME-PAROLASI-KALDIRILDI>`, ayar:
+  `Seed:SampleUserPassword`). Test/canlıda parola verilmez, hesap açılmaz.
+  Açılışta uyarı günlüğü basılır. Bkz. README.
+- Parola kuralı: en az 10 karakter, büyük/küçük harf, rakam, özel karakter.
+  Kilit: 5 hatalı denemede 15 dakika.
+
+### Kimlik olay günlüğü (Bülent'in isteğiyle, adım 6 sonunda eklendi)
+
+- `Domain/Entities/AuthEvent.cs` → `auth_events` tablosu. Denetim günlüğünden
+  **bağımsız**, salt ekleme: güncellenmez, silinmez, mantıksal silme yoktur.
+  Denetim günlüğü veri değişikliğini izler, bu kimlik olayını.
+- Kaydedilen olaylar (`AuthEventType`): `SignInSucceeded`, `SignInFailed`,
+  `SignedOut`, `AccountLockedOut`, `PasswordChanged`.
+- Başarısızlık sebepleri (`AuthFailureReason`): `TenantNotFound`,
+  `TenantInactive`, `UserNotFound`, `UserInactive`, `InvalidPassword`,
+  `LockedOut`, `RequiresTwoFactor`, `PasswordChangeRejected`.
+- Her kayıtta: zaman (UTC), kurum kodu (yazıldığı gibi), denenen kullanıcı adı,
+  TenantId ve UserId (bilinebiliyorsa), IP adresi, tarayıcı bilgisi, sonuç.
+- **Parola veya parola özeti hiçbir alana yazılmaz.** Günlüğe parola hiç
+  geçmez: `IAuthEventLog` arayüzünde parola alanı yoktur.
+- **Ekran mesajı ayrım yapmaz.** "Kurum yok", "kullanıcı yok" ve "parola yanlış"
+  ekranda aynı cümleyi verir; ayrım yalnızca günlüktedir. Kullanıcı adı taraması
+  böylece engellenir. (Pasif kurum/kullanıcı ayrı bir mesaj verir — bilinçli,
+  destek kolaylığı için; istenirse o da tek mesaja indirilebilir.)
+- Eleme sırası kurum → kullanıcı → parola olacak şekilde yeniden kuruldu.
+  Yan fayda: kurum kodu artık büyük/küçük harf duyarsız (`demo` = `DEMO`),
+  günlüğe kurumun kayıtlı yazımı düşer.
+- `IAuthenticationProvider.ChangePasswordAsync` eklendi. Parola değiştirme
+  ekranı henüz yok; ekran yapıldığında bu yöntemi çağıracak ve olay
+  kendiliğinden günlüğe düşecek. Yol sınandı (başarılı ve reddedilen değişim).
+- IP adresi `RemoteIpAddress`ten okunur. Ters vekil (reverse proxy) arkasında
+  gerçek adresi görmek için `ForwardedHeaders` ara yazılımı yapılandırılmalı.
+  Test sunucusuna çıkarken bakılacak.
+
+### Adım 6 doğrulaması (curl ile, gerçek sunucuda)
+- Oturumsuz `/` ve `/counter` → `/login?returnUrl=...` yönlendirmesi.
+- Yanlış parola → "Kurum kodu, kullanıcı adı veya parola hatalı." mesajı.
+- Doğru parola → 302 ve `quami.auth` çerezi; korumalı sayfa açılıyor.
+- Antiforgery belirteci olmadan giriş POST'u → 400.
+- Çıkış → çerez silindi, korumalı uç yeniden giriş istiyor.
+- Kiracı bağlamı: talepler doğru okundu; süzgeç elle filtre yazılmadan yalnızca
+  kendi kiracısının verisini döndürdü (1 kullanıcı, 21 lisans, 21 etkin modül).
+- `last_login_at` yazıldı; denetim günlüğüne parola sızmadı.
+- **Blazor devresi içinde** (tarayıcıyla, geçici bir sayfa ile): `etkilesimli=True`
+  iken kiracı, kullanıcı ve yetki doğru okundu, lisans servisi 21 modül döndürdü.
+  Yani kiracı bağlamı hem istek hattında hem devrede çalışıyor; adım 7'deki menü
+  veriyi görecek. Geçici sayfa kaldırıldı.
+- Depoya `.gitattributes` eklendi (`* text=auto`). Şablon dosyaları CRLF, yeni
+  dosyalar LF olduğu için diff'ler gereksiz büyüyordu.
+
+### Kimlik olay günlüğü doğrulaması (curl ile)
+
+- Yanlış kurum kodu, yanlış kullanıcı ve yanlış parola: ekranda ÜÇÜ DE aynı
+  mesaj; günlükte `TenantNotFound`, `UserNotFound`, `InvalidPassword` olarak
+  ayrı ayrı. IP ve tarayıcı bilgisi her kayıtta dolu.
+- Başarılı giriş, çıkış kaydedildi. Küçük harfle (`demo`) girişte günlüğe
+  kurumun kayıtlı yazımı (`DEMO`) düştü.
+- Art arda 5 hatalı deneme: 5. denemede `AccountLockedOut` ve ayrıca
+  `SignInFailed`/`LockedOut` kaydı. Sınama sonrası hesabın kilidi açıldı.
+- Parola değişikliği: reddedilen deneme `PasswordChangeRejected` ile, başarılı
+  iki değişim sebep alanı boş olarak kaydedildi. Parola sınama sonunda eski
+  haline döndürüldü.
+- Tabloda parola geçen kayıt yok; `auth_events` denetim günlüğüne yazılmıyor.
+- Sınama kayıtları geliştirme veritabanında duruyor (salt ekleme tablo, silinmez).
 
 ## Açık kararlar (Bülent'e ait)
 

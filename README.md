@@ -38,6 +38,9 @@ Bağımlılık yönü: `Web`/`Api` → `Infrastructure` → `Application` → `D
 - **Modül lisanslama:** kiracı için aktif olmayan modül menüde görünmez ve adresle açılamaz.
 - **Menü:** veriden beslenen akordeon (`MenuGroups`, `Modules`), kodda sabit değil.
 - **Denetim günlüğü:** tüm ekleme/güncelleme/silme `AuditLog` tablosuna otomatik yazılır.
+- **Kimlik olay günlüğü:** giriş, çıkış, başarısız deneme (sebebiyle), hesap
+  kilitlenmesi ve parola değişikliği ayrı bir `auth_events` tablosuna yazılır.
+  Salt ekleme. Parola veya parola özeti asla yazılmaz.
 - **Tema:** renkler tek yerde CSS değişkeni olarak; lacivert `#1E3556`, turuncu `#E8772E`.
 - **Bu fazda yapay zeka yok.** Faz 2'de ayrı Python servisi `Quami.Api` üzerinden bağlanır.
 
@@ -57,3 +60,18 @@ Bağlantı dizesi `src/Quami.Web/appsettings.Development.json` içinde
 değişkeni verilebilir; yoksa yerel varsayılan kullanılır.
 
 Yeni migration: `dotnet ef migrations add <Ad> --project src/Quami.Infrastructure --output-dir Persistence/Migrations`
+
+### Geliştirme girişi
+
+Boş veritabanında `DEMO` adlı örnek kurum ve `admin` kullanıcısı oluşur.
+Giriş ekranı kurum kodu, kullanıcı adı ve parola ister.
+
+| Alan | Değer |
+|---|---|
+| Kurum kodu | `DEMO` |
+| Kullanıcı adı | `admin` |
+| Parola | `<GELISTIRME-PAROLASI-KALDIRILDI>` |
+
+Bu hesap **yalnızca Development ortamında** açılır. Parolayı değiştirmek için
+`Seed:SampleUserPassword` ayarını verin. Test ve canlı ortamda bu hesap
+oluşturulmaz; kullanıcılar elle açılır.

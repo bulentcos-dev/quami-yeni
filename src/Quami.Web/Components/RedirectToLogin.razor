@@ -1,0 +1,9 @@
+@inject NavigationManager Navigation
+@code {
+    // Oturum açılmamışsa giriş ekranına; dönüş adresi sorgu dizesinde taşınır.
+    protected override void OnInitialized()
+    {
+        var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        Navigation.NavigateTo($"/login?returnUrl=/{returnUrl}", forceLoad: true);
+    }
+}

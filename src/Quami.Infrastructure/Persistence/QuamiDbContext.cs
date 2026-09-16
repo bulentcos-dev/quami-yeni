@@ -1,7 +1,10 @@
 using System.Linq.Expressions;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Quami.Infrastructure.Identity;
 using Quami.Application.Abstractions;
 using Quami.Domain.Common;
 using Quami.Domain.Entities;
@@ -14,9 +17,12 @@ namespace Quami.Infrastructure.Persistence;
 /// - Global query filter: ITenantScoped varlıklarda kiracı süzgeci (sistem
 ///   yöneticisi muaf), ISoftDeletable varlıklarda silinmiş kayıt gizleme.
 /// - SaveChanges override: TenantId ve denetim alanlarını doldurur, fiziksel
-///   silmeyi mantıksal silmeye çevirir, AuditLog yazar.
+///   silmeyi mantıksal silmeye çevirir, AuditLog'u AYNI işlemde yazar.
+/// - Identity tabloları (kullanıcı, rol, belirteçler) da buradadır: tek
+///   veritabanı, tek migration zinciri. Identity varlıkları denetim günlüğüne
+///   yazılmaz; parola özeti JSON olarak saklanmamalı.
 /// </summary>
-public class QuamiDbContext : DbContext
+public class QuamiDbContext : IdentityDbContext<QuamiIdentityUser, QuamiIdentityRole, Guid>
 {
     public const string TenantFilter = "Tenant";
     public const string SoftDeleteFilter = "SoftDelete";
@@ -33,8 +39,20 @@ public class QuamiDbContext : DbContext
     public DbSet<MenuGroup> MenuGroups => Set<MenuGroup>();
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<TenantModule> TenantModules => Set<TenantModule>();
-    public DbSet<User> Users => Set<User>();
+    /// <summary>
+    /// İş tarafındaki kullanıcılar (Domain.User). Identity'nin kendi
+    /// <c>Users</c> kümesi ayrıdır ve kimlik doğrulama kaydını tutar; ikisi
+    /// aynı Id'yi paylaşır. Adlar bilerek farklı: hangisinin sorgulandığı
+    /// okununca anlaşılsın.
+    /// </summary>
+    public DbSet<User> BusinessUsers => Set<User>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    /// <summary>
+    /// Kimlik olay günlüğü: giriş, çıkış, başarısız deneme, kilitlenme, parola
+    /// değişikliği. Denetim günlüğünden bağımsız, salt ekleme.
+    /// </summary>
+    public DbSet<AuthEvent> AuthEvents => Set<AuthEvent>();
 
     // Query filter'lar bu iki özelliği yakalar; EF Core bunları sorgu parametresi
     // olarak gönderir, plan önbelleği bozulmaz.
@@ -45,6 +63,7 @@ public class QuamiDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(QuamiDbContext).Assembly);
+        MapIdentityTables(modelBuilder);
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
@@ -66,6 +85,23 @@ public class QuamiDbContext : DbContext
                 method.Invoke(this, [modelBuilder]);
             }
         }
+    }
+
+    /// <summary>
+    /// Identity tablolarını snake_case adlara taşır. Identity kendi tablo
+    /// adlarını açıkça belirlediği için (AspNetUsers ...) adlandırma kuralı
+    /// onlara uygulanmaz; elle eşlenmezse veritabanında her sorgu tırnak
+    /// gerektirir.
+    /// </summary>
+    private static void MapIdentityTables(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<QuamiIdentityUser>().ToTable("identity_users");
+        modelBuilder.Entity<QuamiIdentityRole>().ToTable("identity_roles");
+        modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("identity_user_claims");
+        modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("identity_user_roles");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("identity_user_logins");
+        modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("identity_user_tokens");
+        modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("identity_role_claims");
     }
 
     private void ApplySoftDeleteFilter<TEntity>(ModelBuilder modelBuilder)
@@ -118,10 +154,14 @@ public class QuamiDbContext : DbContext
 
         foreach (var entry in ChangeTracker.Entries())
         {
-            if (entry.Entity is AuditLog)
+            if (entry.State is EntityState.Detached or EntityState.Unchanged)
                 continue;
 
-            if (entry.State is EntityState.Detached or EntityState.Unchanged)
+            // Yalnızca kendi varlıklarımız denetlenir. Identity tabloları dışarıda:
+            // parola özeti ve güvenlik damgası denetim günlüğüne JSON olarak
+            // yazılmamalı. Kimlik olayları (giriş, parola değişikliği) için ayrı
+            // bir günlük gerekecek.
+            if (entry.Entity is not BaseEntity)
                 continue;
 
             switch (entry.State)

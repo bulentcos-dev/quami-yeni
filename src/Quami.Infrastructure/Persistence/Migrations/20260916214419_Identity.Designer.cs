@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quami.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Quami.Infrastructure.Persistence;
 namespace Quami.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(QuamiDbContext))]
-    partial class QuamiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916214419_Identity")]
+    partial class Identity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -209,73 +212,6 @@ namespace Quami.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_audit_logs_tenant_id_timestamp");
 
                     b.ToTable("audit_logs", (string)null);
-                });
-
-            modelBuilder.Entity("Quami.Domain.Entities.AuthEvent", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("AttemptedUserName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("attempted_user_name");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("event_type");
-
-                    b.Property<string>("FailureReason")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("failure_reason");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)")
-                        .HasColumnName("ip_address");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<string>("TenantShortName")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("tenant_short_name");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)")
-                        .HasColumnName("user_agent");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_auth_events");
-
-                    b.HasIndex("Timestamp")
-                        .HasDatabaseName("ix_auth_events_timestamp");
-
-                    b.HasIndex("AttemptedUserName", "Timestamp")
-                        .HasDatabaseName("ix_auth_events_attempted_user_name_timestamp");
-
-                    b.HasIndex("TenantId", "Timestamp")
-                        .HasDatabaseName("ix_auth_events_tenant_id_timestamp");
-
-                    b.ToTable("auth_events", (string)null);
                 });
 
             modelBuilder.Entity("Quami.Domain.Entities.MenuGroup", b =>

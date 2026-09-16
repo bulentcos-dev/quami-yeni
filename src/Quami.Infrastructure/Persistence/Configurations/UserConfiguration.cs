@@ -9,6 +9,9 @@ public class UserConfiguration : BaseEntityConfiguration<User>
     public override void Configure(EntityTypeBuilder<User> builder)
     {
         base.Configure(builder);
+        // Tablo adı DbSet adından türer; DbSet "BusinessUsers" olduğu için
+        // açıkça sabitlenir.
+        builder.ToTable("users");
         builder.Property(e => e.UserName).HasMaxLength(100).IsRequired();
         builder.Property(e => e.Email).HasMaxLength(256).IsRequired();
         builder.Property(e => e.FullName).HasMaxLength(200).IsRequired();
