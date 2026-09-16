@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
-Son güncelleme: 15 Eylül 2026
-Son commit: adım 4: migration ve veritabanı (bkz. `git log`)
+Son güncelleme: 17 Eylül 2026
+Son commit: adım 5: seed verisi ve lisans servisi (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -18,11 +18,11 @@ yerden devam eder. Her adım bitince güncellenir.
 | # | Adım | Durum |
 |---|---|---|
 | 1 | Çözüm ve proje iskeleti, .gitignore, README | BİTTİ |
-| 2 | Domain sınıfları: Tenant, Module, MenuGroup, TenantModule, AuditLog, User | BİTTİ (commit bekliyor) |
-| 3 | DbContext, global query filter, SaveChanges override (TenantId + audit log) | BİTTİ (commit bekliyor) |
+| 2 | Domain sınıfları: Tenant, Module, MenuGroup, TenantModule, AuditLog, User | BİTTİ |
+| 3 | DbContext, global query filter, SaveChanges override (TenantId + audit log) | BİTTİ |
 | 4 | İlk migration ve veritabanı oluşturma | BİTTİ |
-| 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | SIRADA |
-| 6 | Kimlik ve oturum, ITenantContext | bekliyor |
+| 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | BİTTİ |
+| 6 | Kimlik ve oturum, ITenantContext | SIRADA |
 | 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | bekliyor |
 | 8 | Boş dashboard sayfası | bekliyor |
 | 9 | IFileStorage + Quami.Api iskeleti | bekliyor |
@@ -149,30 +149,72 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
   `Program.cs` içine `AddInfrastructure`. ITenantContext henüz kayıtlı değil;
   DbContext çözülürse hata verir. Adım 5 seed'i için geçici kayıt gerekecek,
   kalıcı uygulama adım 6'da.
-## Adım 5 için Bülent'in notları
+## Adım 5 için Bülent'in notları (teyitli, 16 Eylül 2026)
 
-Bülent üç başlık verdi; ayrıntısı bu oturumda yazılı değil, aşağıdaki açılım
-Claude'un anladığı haldir. Adım 5'e başlamadan Bülent'e teyit ettirin.
+1. Menü grupları ve modüller için kimlikler kodda elle yazılmış sabit Guid
+   değerleri olsun, her ortamda aynı. Eşleştirme kimlik üzerinden yapılsın, ad
+   üzerinden değil — ad değişebilir.
+2. Seed her açılışta çalışsın: sistem geneli kayıt yoksa ekle, varsa tanım
+   alanlarını (AdTR, AdEN, Sıra, İkon, Route, IsAvailable) koda göre GÜNCELLE.
+   Yani modül adını kodda değiştirdiğimde açılışta veritabanına yansısın.
+   Kiracıya ait veriye (TenantModules aktiflik durumu, tarih aralığı) hiç
+   dokunma — müşteri lisansını elle kapatmışsa açılışta geri açılmamalı.
+3. Örnek kiracıya hazır modüllerin hepsi açık olsun. ENV ve FOOD
+   IsAvailable = false olduğu için lisans kaydı açılmasın; lisans servisi hazır
+   olmayan modülü hiçbir kiracı için etkin saymasın.
 
-1. **Sabit Guid kimlikleri.** Menü grubu ve modül kayıtlarının Id'leri kodda
-   sabit (hard-coded) Guid olsun, çalıştırmada üretilmesin. Böylece her ortamda
-   (lokal, test, canlı) aynı modül aynı Id'yi taşır; lisans kayıtları ve
-   ileride veri taşıma ortamlar arasında tutarlı kalır.
-2. **Tekrar çalıştırılabilir ama kiracı verisine dokunmayan seed.** Seed her
-   açılışta çalışabilir (idempotent): sistem geneli kayıtları (MenuGroups,
-   Modules) koda göre ekler/günceller. Kiracıya ait verilere (Tenants, Users,
-   TenantModules) ise yalnızca ilk kez, hiç kayıt yokken dokunur; var olan
-   kiracı verisini asla değiştirmez veya silmez. Örnek kiracı sadece boş
-   veritabanında oluşturulur.
-3. **ENV/FOOD lisanslanmasın.** Çevre ve Gıda güvenliği modülleri
-   `IsAvailable = false` ile "yakında" olarak seed'lenir; örnek kiracıya
-   TenantModule kaydı açılmaz. IModuleLicenseService de hazır olmayan modülü
-   hiçbir kiracı için etkin saymamalı.
+## Adım 5'te üretilenler ve kararlar
 
-Planlanan akış: uygulama açılışında migration uygula → sistem geneli seed →
-(veritabanı boşsa) örnek kiracı + hazır modüllerin lisansları. Seed sırasında
-ITenantContext için geçici olarak DesignTimeTenantContext kaydı gerekir;
-kalıcı uygulama adım 6'da.
+- `Persistence/Seed/SeedIds.cs`: elle yazılmış sabit Guid'ler. Menü grupları
+  `1000...-00NN`, modüller `2000...-00NN`, örnek kiracı `3000...`, örnek
+  kullanıcı `4000...`. **Bir değer canlıya çıktıktan sonra asla değişmez;**
+  yeni modül yeni numara alır.
+- `Persistence/Seed/SeedData.cs`: menünün tek kaynağı. 6 grup, 23 modül
+  (ad TR/EN, sıra, ikon, route, IsAvailable). Burada yapılan değişiklik bir
+  sonraki açılışta veritabanına yansır.
+- `Persistence/Seed/DatabaseSeeder.cs`: `MigrateAndSeedAsync`.
+  Sistem geneli kayıtlar kimlik üzerinden upsert edilir; silinmiş işaretliyse
+  canlandırılır (kimlik birincil anahtarı işgal ettiği için yeniden ekleme
+  çakışırdı). Kiracı verisine yalnızca hiç kiracı yokken dokunulur.
+- `Services/ModuleLicenseService.cs` + `Application/Abstractions/IModuleLicenseService.cs`:
+  `IsEnabledAsync`, `GetEnabledModulesAsync`. Üç koşul birlikte: modül hazır
+  (IsAvailable), lisans aktif, tarih aralığı içinde. Sorgu kiracı süzgecini yok
+  sayıp kiracıyı parametreden alır (sistem yöneticisi başka kiracıyı da
+  sorgulayabilsin); silinmiş kayıt süzgeci açık kalır. Saat `TimeProvider`
+  üzerinden (test edilebilir).
+- `DesignTimeTenantContext` → **`NullTenantContext`** olarak yeniden adlandırıldı;
+  hem migration üretimi hem açılış seed'i kullanıyor, "tasarım zamanı" adı
+  yanıltıcıydı. `AddInfrastructure` içinde `TryAddScoped` ile geçici kayıtlı;
+  adım 6'da gerçek uygulama eklenince devre dışı kalır.
+- Migration yalnızca Development'ta açılışta uygulanır
+  (`app.Environment.IsDevelopment()`); test/canlıda dağıtım adımı uygular.
+- HOME grubu altında tek bir `HOME` modülü (route `/`) var. Adım 7'de menü
+  bunu grup başlığı yerine doğrudan bağlantı olarak çizecek. Bülent onaylamazsa
+  seed'den çıkarmak tek satır.
+- Örnek kullanıcı `admin` (DEMO kiracısı) `IsSystemAdmin = false` ile
+  oluşturulur. Parola yok; kimlik adım 6'da. Sistem yöneticisi hesabı bilinçli
+  olarak seed'lenmedi — muafiyetli hesap güvenlik açısından elle açılmalı.
+- **Seed kilidi (Bülent'in isteğiyle eklendi):** seed tek işlemde çalışır ve
+  başında `pg_advisory_xact_lock` alınır (anahtar `0x5175616D69536564`, ASCII
+  "QuamiSed", `DatabaseSeeder.SeedAdvisoryLockKey` — değiştirilmemeli). İkinci
+  örnek kilidi bekler, kilit düşünce işin yapılmış olduğunu görüp değişiklik
+  yazmadan geçer. Kilit işlem bitince kendiliğinden bırakılır, uygulama çökse
+  bile sızmaz. Migration'ın kendi kilidi EF Core'da, ayrı.
+  Sınandı: dışarıdan psql ile kilit tutulurken uygulama bekledi ("Seed kilidi
+  bekleniyor"), kilit bırakılınca 0 değişiklikle geçti, artık kilit kalmadı.
+
+### Adım 5 doğrulaması (gerçek veritabanında koşturuldu)
+
+- Sayımlar: 6 grup, 23 modül, 21 lisans (23 − 2 hazır olmayan), 1 kiracı,
+  1 kullanıcı. ENV ve FOOD için lisans kaydı yok.
+- Veritabanı elle bozuldu (DOCS adı ve sırası değiştirildi, TASKS lisansı
+  kapatıldı, kiracı adı değiştirildi) ve uygulama yeniden başlatıldı:
+  DOCS koda göre düzeltildi; TASKS lisansı kapalı kaldı; kiracı adı
+  korundu. Denetim günlüğü yalnızca 1 satır büyüdü — değişmeyen kayıt
+  yazılmıyor.
+- Lisans servisi gerçek sorguyla sınandı: DOCS true, TASKS (elle kapatılmış)
+  false, ENV (hazır değil) false, olmayan kod false, etkin modül sayısı 20.
+  Sınama sonrası kiracı verisi elle eski haline getirildi.
 
 ## Açık kararlar (Bülent'e ait)
 

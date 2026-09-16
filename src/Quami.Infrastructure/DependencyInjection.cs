@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Quami.Application.Abstractions;
 using Quami.Infrastructure.Persistence;
+using Quami.Infrastructure.Services;
 
 namespace Quami.Infrastructure;
 
@@ -22,6 +25,14 @@ public static class DependencyInjection
             options
                 .UseNpgsql(connectionString)
                 .UseSnakeCaseNamingConvention());
+
+        // GEÇİCİ: oturum yok sayan boş bağlam. Adım 6'da oturumdan beslenen
+        // gerçek uygulama kaydedilecek ve bunun yerini alacak. TryAdd olduğu
+        // için o kayıt eklendiğinde burası devreye girmez.
+        services.TryAddScoped<ITenantContext, NullTenantContext>();
+
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IModuleLicenseService, ModuleLicenseService>();
 
         return services;
     }

@@ -23,6 +23,6 @@ public sealed class QuamiDbContextFactory : IDesignTimeDbContextFactory<QuamiDbC
             .UseSnakeCaseNamingConvention()
             .Options;
 
-        return new QuamiDbContext(options, new DesignTimeTenantContext());
+        return new QuamiDbContext(options, new NullTenantContext());
     }
 }
