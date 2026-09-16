@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
 Son güncelleme: 17 Eylül 2026
-Son commit: adım 8: boş gösterge paneli (bkz. `git log`)
+Son commit: adım 10: modül yazım rehberi ve README (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -26,11 +26,15 @@ yerden devam eder. Her adım bitince güncellenir.
 | 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | BİTTİ |
 | 7b | İkonlar (Lucide) ve ortak bileşen kümesi | BİTTİ |
 | 8 | Boş dashboard sayfası | BİTTİ |
-| 9 | IFileStorage + Quami.Api iskeleti | BİTTİ (commit bekliyor) |
-| 10 | İlk commit | KONUSUZ — her adım ayrı commit edildi |
+| 9 | IFileStorage + Quami.Api iskeleti | BİTTİ |
+| 10 | Modül yazım rehberi ve README | BİTTİ — **İSKELET TAMAM** |
 
 Çalışma kuralı: tek adım, tek komut; adım bitince Bülent'e rapor, onay, sonraki adım.
 Şartnamenin tamamı bu oturumun iskelet prompt'unda; özeti README.md'de.
+
+**İSKELET BİTTİ.** Bundan sonrası modül yazımıdır: menü sırasıyla, birer birer.
+Nasıl yazılacağı `docs/MODUL_YAZIM_REHBERI.md` dosyasındadır.
+Sıradaki modül: **İşlerim → Görevler** (grubun ilk modülü, kalıbı o kuracak).
 
 ## Adım 1'de verilen şablon kararları
 
@@ -563,6 +567,17 @@ yazılmadı; her şey ortak bileşenler ve ortak yerleşim sınıflarıyla kurul
 - Başka kiracının klasörüne elle konan dosya, geçerli depo adıyla istendi: 404.
 - Dizin aşımı denemesi (`..%2F..%2Fappsettings.json`): 400.
 - Sınama dosyaları ve geçici uç silindi. Sunucu günlüklerinde hata yok.
+
+## Adım 10: belgeler
+
+- `docs/MODUL_YAZIM_REHBERI.md`: yeni modül eklemenin sekiz adımı, dört menü
+  grubunun davranış kalıbı, uyulacak dokuz kural, sık yapılan altı hata ve
+  hazır altyapının listesi.
+- `README.md` yeniden yazıldı: ürünün ne olduğu, teknolojiler, sıfırdan kurulum
+  (araçlar, veritabanı, migration, çalıştırma), geliştirme hesabı, günlük
+  komutlar, klasör yapısının ne işe yaradığı, temel ilkeler.
+- README'de yeni makine uyarısı: bağlantı dizesindeki kullanıcı adı makineye
+  göre değişir, düzeltilmesi gerekir.
 
 ## Açık kararlar (Bülent'e ait)
 
