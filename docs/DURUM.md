@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
 Son güncelleme: 17 Eylül 2026
-Son commit: adım 5: seed verisi ve lisans servisi (bkz. `git log`)
+Son commit: adım 6: kimlik, oturum, kiracı bağlamı ve kimlik olay günlüğü (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -23,8 +23,8 @@ yerden devam eder. Her adım bitince güncellenir.
 | 4 | İlk migration ve veritabanı oluşturma | BİTTİ |
 | 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | BİTTİ |
 | 6 | Kimlik ve oturum, ITenantContext, kimlik olay günlüğü | BİTTİ |
-| 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | SIRADA |
-| 8 | Boş dashboard sayfası | bekliyor |
+| 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | BİTTİ (commit bekliyor) |
+| 8 | Boş dashboard sayfası | SIRADA |
 | 9 | IFileStorage + Quami.Api iskeleti | bekliyor |
 | 10 | İlk commit | bekliyor (adım 1 ayrıca commit edildi) |
 
@@ -334,6 +334,89 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
   haline döndürüldü.
 - Tabloda parola geçen kayıt yok; `auth_events` denetim günlüğüne yazılmıyor.
 - Sınama kayıtları geliştirme veritabanında duruyor (salt ekleme tablo, silinmez).
+
+## Adım 7'de üretilenler ve kararlar
+
+### Menü (tamamen veriden)
+- `Application/Menu/` → `IMenuService`, `MenuGroupView`, `MenuItemView`, `ModuleAccess`.
+  Uygulaması `Infrastructure/Services/MenuService.cs`.
+- Menüde koda gömülü tek satır yok. Başlıklar, sıralar, adresler, adlar hep
+  `menu_groups` / `modules` tablolarından; hangi modülün görüneceği kiracının
+  lisansından.
+- Görünürlük kuralı: hazır + lisanslı → tıklanabilir; hazır değil (ENV, FOOD) →
+  soluk, "(yakında)", tıklanmaz; hazır ama lisanssız → menüde HİÇ yok.
+- **`MenuGroup.IsDirectLink` sütunu eklendi** (migration `MenuGroupDirectLink`).
+  HOME için true: menüde açılır başlık değil, doğrudan bağlantı olarak çizilir.
+  Davranış koda değil veriye bağlı; başka bir grup da böyle yapılabilir.
+- Akordeon: açılışta yalnız ana başlıklar, tek seferde tek grup açık. Bulunulan
+  sayfanın grubu kendiliğinden açılır.
+
+### Lisans kontrolü (sunucuda)
+- `Components/ModuleAccessGuard.razor`, MainLayout içinde `@Body`yi sarar.
+  Adres bir modüle aitse `IMenuService.CheckRouteAsync` ile bakılır; lisanssız
+  veya hazır değilse sayfa HİÇ oluşturulmaz, yerine açıklama panosu gelir.
+  Blazor Server'da bu kod sunucuda çalışır: adres elle yazılsa da açılmaz.
+- Modüle ait olmayan adresler (giriş, hata) serbesttir.
+
+### Dil
+- `Resources/SharedResource.resx` (Türkçe, varsayılan) ve `.en.resx`. 36 anahtar.
+  Ekranda görünen her metin buradan gelir; menü adları veritabanından.
+- **İşaretçi sınıf `SharedResource` projenin KÖK ad alanında** (`Quami.Web`).
+  `Quami.Web.Resources` içinde olsaydı aranan yol `Resources/Resources.SharedResource.resx`
+  olurdu ve kaynaklar bulunamazdı (bu hata yaşandı ve düzeltildi).
+- Kültür sırası: çerez (açık seçim) → kullanıcının kayıtlı dili
+  (`quami:language` talebi, `UserClaimCultureProvider`). Tarayıcının
+  Accept-Language başlığı bilerek kullanılmıyor; varsayılan Türkçe.
+- `/culture?lang=..&returnUrl=..` ucu çerezi yazar ve oturum açıksa
+  `users.language` alanını günceller. Tam sayfa yüklemesi gerekir: kültür
+  Blazor devresi kurulurken belirlenir. Açık yönlendirme koruması var.
+- Doğrulama mesajları DataAnnotations kaynak bağlama ile YAZILMADI: anahtarlarda
+  nokta var ve `SharedResource` üretilmiş tasarımcı sınıfı değil; o yol çalışma
+  anında patlardı. Zorunlu alan kontrolü kodda, metin yine kaynak dosyasından.
+
+### Tema
+- Tüm renkler `wwwroot/app.css` içinde CSS değişkeni: `--quami-primary` #1E3556,
+  `--quami-accent` #E8772E ve türevleri. Sayfa/bileşen içine renk yazılmıyor.
+- **Bootstrap kaldırıldı** (`wwwroot/lib` silindi, App.razor'daki bağlantı çıktı).
+  Şablonun `MainLayout.razor.css` ve `NavMenu.razor.css` dosyaları da silindi:
+  tema tek dosyada olsun.
+- **İkonlar henüz çizilmiyor.** Veride ikon adları duruyor (Bootstrap Icons
+  adlandırması) ama bir ikon seti seçilmediği için glif basılmıyor. Set
+  seçilince yalnızca menü şablonuna eklenecek, veri hazır.
+
+### DbContext fabrikası (yol boyunca çıkan gerçek hata)
+- Blazor Server'da bir devre içinde NavMenu ile ModuleAccessGuard aynı anda
+  sorgu çalıştırınca paylaşılan DbContext patladı
+  ("A second operation was started on this context instance...").
+- Çözüm: `AddDbContextFactory<QuamiDbContext>(..., ServiceLifetime.Scoped)`.
+  Okuma servisleri (`MenuService`, `ModuleLicenseService`) her çağrıda kendi
+  kısa ömürlü bağlamını açar. Tek iş parçacıklı akışlar (giriş, seed, dil ucu)
+  için kapsamlı `QuamiDbContext` kaydı fabrikadan üretilerek korundu.
+- **Kural:** bundan sonra Blazor bileşenlerinden çağrılan okuma servisleri
+  fabrikayı kullanmalı, doğrudan DbContext'i değil.
+
+### Sayfalar
+- `Components/Pages/ModulePlaceholder.razor`: 22 modül adresini karşılayan
+  **geçici iskele**. Modülün adını menüden okuyup gösterir, "yapım sırasında"
+  der. Bir modül yazıldığında adresi bu dosyadan çıkarılır; liste bitince dosya
+  silinir.
+- Şablondan gelen `Counter.razor` ve `Weather.razor` silindi.
+- `Error.razor` ve `NotFound.razor` yerelleştirildi ve sade yerleşime alındı.
+- Giriş/çıkış ekranları temaya ve kaynak dosyalarına taşındı.
+
+### Adım 7 doğrulaması (tarayıcıda, gerçek sunucuda)
+- Menü veriden geldi: 6 grup, Ana sayfa doğrudan bağlantı olarak.
+- Akordeon tek-açık: Risk açıkken İşlerim'e tıklanınca Risk kapandı.
+- Çevre ve Gıda güvenliği soluk ve "(yakında)" etiketiyle, tıklanmaz.
+- Görevler'e gidildi: yer tutucu sayfa modül adını veriden gösterdi, bağlantı
+  turuncu çizgiyle etkin işaretlendi, grup açık kaldı.
+- Dil TR→EN: menü, sayfa başlığı, mesajlar ve "Sign out" İngilizceye döndü;
+  açık grup ve etkin satır korundu. Tercih `users.language` alanına yazıldı.
+- Lisans kapatma sınaması: TASKS lisansı kapatılınca Görevler menüden kayboldu
+  ve `/tasks` adresi elle yazılınca "Bu modüle erişiminiz yok" panosu geldi.
+  Sınama sonrası lisans geri açıldı.
+- `/environment` elle yazılınca "Bu modül henüz hazır değil" panosu geldi.
+- Oturum boyunca sunucu günlüğünde hata yok.
 
 ## Açık kararlar (Bülent'e ait)
 

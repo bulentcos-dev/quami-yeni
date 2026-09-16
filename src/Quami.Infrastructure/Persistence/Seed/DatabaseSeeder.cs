@@ -103,7 +103,8 @@ public static class DatabaseSeeder
                     NameTr = def.NameTr,
                     NameEn = def.NameEn,
                     SortOrder = def.SortOrder,
-                    Icon = def.Icon
+                    Icon = def.Icon,
+                    IsDirectLink = def.IsDirectLink
                 });
                 continue;
             }
@@ -113,6 +114,7 @@ public static class DatabaseSeeder
             group.NameEn = def.NameEn;
             group.SortOrder = def.SortOrder;
             group.Icon = def.Icon;
+            group.IsDirectLink = def.IsDirectLink;
             Revive(group);
         }
 

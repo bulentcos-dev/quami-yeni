@@ -2,7 +2,8 @@ namespace Quami.Infrastructure.Persistence.Seed;
 
 /// <summary>Bir menü grubunun kod içindeki tanımı.</summary>
 public sealed record MenuGroupSeed(
-    Guid Id, string Code, string NameTr, string NameEn, int SortOrder, string Icon);
+    Guid Id, string Code, string NameTr, string NameEn, int SortOrder, string Icon,
+    bool IsDirectLink = false);
 
 /// <summary>
 /// Bir modülün kod içindeki tanımı. <paramref name="IsAvailable"/> false ise
@@ -20,7 +21,7 @@ public static class SeedData
 {
     public static readonly IReadOnlyList<MenuGroupSeed> MenuGroups =
     [
-        new(SeedIds.MenuGroups.Home,   "HOME",   "Ana sayfa",                 "Home",               1, "house"),
+        new(SeedIds.MenuGroups.Home,   "HOME",   "Ana sayfa",                 "Home",               1, "house", IsDirectLink: true),
         new(SeedIds.MenuGroups.MyWork, "MYWORK", "İşlerim",                   "My Work",            2, "list-check"),
         new(SeedIds.MenuGroups.DocRec, "DOCREC", "Süreç ve kayıt",            "Documents & Records", 3, "folder"),
         new(SeedIds.MenuGroups.Audit,  "AUDIT",  "Denetim ve değerlendirme",  "Audit & Assessment", 4, "clipboard-check"),

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Quami.Application.Abstractions;
+using Quami.Application.Menu;
 using Quami.Infrastructure.Identity;
 using Quami.Infrastructure.Persistence;
 using Quami.Infrastructure.Services;
@@ -23,10 +24,20 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString(ConnectionStringName)
             ?? throw new InvalidOperationException($"ConnectionStrings:{ConnectionStringName} tanımlı değil.");
 
-        services.AddDbContext<QuamiDbContext>(options =>
-            options
+        // Blazor Server'da bir devre (circuit) içinde birden çok bileşen aynı anda
+        // sorgu çalıştırabilir; tek bir paylaşılan DbContext bunu kaldırmaz
+        // ("A second operation was started..."). Bu yüzden FABRİKA kullanılır:
+        // okuma servisleri her çağrıda kendi kısa ömürlü bağlamını açar.
+        // Fabrika kapsamlıdır (scoped), çünkü DbContext kapsamlı ITenantContext ister.
+        services.AddDbContextFactory<QuamiDbContext>(
+            (_, options) => options
                 .UseNpgsql(connectionString)
-                .UseSnakeCaseNamingConvention());
+                .UseSnakeCaseNamingConvention(),
+            lifetime: ServiceLifetime.Scoped);
+
+        // Tek iş parçacıklı akışlar (giriş, seed, dil ucu) doğrudan bağlam ister.
+        services.AddScoped<QuamiDbContext>(sp =>
+            sp.GetRequiredService<IDbContextFactory<QuamiDbContext>>().CreateDbContext());
 
         // Oturum yoksa (migration, arka plan işleri, seed) kullanılan boş bağlam.
         // AddQuamiIdentity çağrılırsa gerçek uygulama bunun yerini alır.
@@ -34,6 +45,7 @@ public static class DependencyInjection
 
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IModuleLicenseService, ModuleLicenseService>();
+        services.AddScoped<IMenuService, MenuService>();
 
         return services;
     }

@@ -1,0 +1,25 @@
+@using System.Globalization
+@using Microsoft.Extensions.Localization
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+
+@* Dil değiştirici. Seçim çereze yazılır ve oturum açıksa kullanıcının
+   kaydına işlenir; sayfa tam yeniden yüklenir, çünkü kültür devre
+   kurulurken belirlenir. *@
+<span class="quami-user" aria-label="@L["TopBar.Language"]">
+    <button type="button" class="quami-linkbutton" disabled="@IsTurkish" @onclick='() => Switch("tr")'>TR</button>
+    /
+    <button type="button" class="quami-linkbutton" disabled="@(!IsTurkish)" @onclick='() => Switch("en")'>EN</button>
+</span>
+
+@code {
+    private static bool IsTurkish =>
+        CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+
+    private void Switch(string language)
+    {
+        var current = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var target = $"/culture?lang={Uri.EscapeDataString(language)}&returnUrl={Uri.EscapeDataString("/" + current)}";
+        Navigation.NavigateTo(target, forceLoad: true);
+    }
+}

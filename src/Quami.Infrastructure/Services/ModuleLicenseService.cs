@@ -14,11 +14,13 @@ namespace Quami.Infrastructure.Services;
 /// sistem yöneticisi başka bir kiracının lisansını da sorgulayabilmeli.
 /// Silinmiş kayıt süzgeci açık kalır.
 /// </summary>
-public sealed class ModuleLicenseService(QuamiDbContext db, TimeProvider timeProvider) : IModuleLicenseService
+public sealed class ModuleLicenseService(IDbContextFactory<QuamiDbContext> dbFactory, TimeProvider timeProvider) : IModuleLicenseService
 {
     public async Task<bool> IsEnabledAsync(Guid tenantId, string moduleCode, CancellationToken cancellationToken = default)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         return await db.Modules
             .IgnoreQueryFilters([QuamiDbContext.TenantFilter])
@@ -32,6 +34,8 @@ public sealed class ModuleLicenseService(QuamiDbContext db, TimeProvider timePro
     public async Task<IReadOnlyList<Module>> GetEnabledModulesAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         return await db.Modules
             .IgnoreQueryFilters([QuamiDbContext.TenantFilter])

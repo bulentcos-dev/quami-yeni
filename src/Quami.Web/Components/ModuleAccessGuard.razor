@@ -1,0 +1,69 @@
+@using Quami.Application.Abstractions
+@using Quami.Application.Menu
+@using Microsoft.Extensions.Localization
+@inject IMenuService MenuService
+@inject ITenantContext TenantContext
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+@implements IDisposable
+
+@* Adres bazlı modül erişim kontrolü. Sunucuda çalışır (Blazor Server):
+   lisanssız ya da hazır olmayan modülün sayfası hiç oluşturulmaz, adres
+   tarayıcıya elle yazılsa da. Modüle ait olmayan adresler serbesttir. *@
+@switch (_access)
+{
+    case ModuleAccess.NotLicensed:
+        <div class="quami-panel">
+            <h1>@L["Access.Denied.Title"]</h1>
+            <p class="quami-muted">@L["Access.Denied.Message"]</p>
+        </div>
+        break;
+
+    case ModuleAccess.NotAvailable:
+        <div class="quami-panel">
+            <h1>@L["Module.NotBuilt.Title"]</h1>
+            <p class="quami-muted">@L["Module.NotBuilt.Message"]</p>
+        </div>
+        break;
+
+    default:
+        @ChildContent
+        break;
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private ModuleAccess _access = ModuleAccess.NotAModule;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        await EvaluateAsync();
+    }
+
+    private async Task EvaluateAsync()
+    {
+        if (TenantContext.TenantId is not { } tenantId)
+        {
+            // Kiracı yoksa modül kontrolü yapılamaz; yetkilendirme zaten
+            // oturumsuz kullanıcıyı giriş ekranına gönderir.
+            _access = ModuleAccess.NotAModule;
+            return;
+        }
+
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        _access = await MenuService.CheckRouteAsync(tenantId, path);
+    }
+
+    // async void kullanılmaz: oradaki bir hata devreyi düşürür. İş renderer'ın
+    // sırasına verilir, hata normal bileşen hatası olarak ele alınır.
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        _ = InvokeAsync(async () =>
+        {
+            await EvaluateAsync();
+            StateHasChanged();
+        });
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

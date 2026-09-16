@@ -1,30 +1,102 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Quami.Web</a>
-    </div>
-</div>
+@using Quami.Application.Abstractions
+@using Quami.Application.Menu
+@using Microsoft.Extensions.Localization
+@inject IMenuService MenuService
+@inject ITenantContext TenantContext
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+@implements IDisposable
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@* Menüde koda gömülü tek satır yoktur: başlıklar da bağlantılar da
+   MenuGroups/Modules tablolarından, kiracının lisanslarına göre gelir. *@
+<nav class="quami-menu" aria-label="@L["Nav.Menu"]">
+    @foreach (var group in _groups)
+    {
+        if (group.IsDirectLink)
+        {
+            @* Ana sayfa: açılır başlık değil, doğrudan bağlantı (veriden: IsDirectLink) *@
+            <NavLink class="quami-menu-link quami-menu-link--top"
+                     href="@group.DirectRoute"
+                     Match="NavLinkMatch.All">@group.Name</NavLink>
+        }
+        else
+        {
+            var isOpen = _openGroupCode == group.Code;
+            <button type="button"
+                    class="quami-menu-group @(isOpen ? "is-open" : null)"
+                    aria-expanded="@isOpen"
+                    @onclick="() => Toggle(group.Code)">
+                <span>@group.Name</span>
+                <span class="quami-caret" aria-hidden="true">&#9654;</span>
+            </button>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+            @if (isOpen)
+            {
+                <div class="quami-menu-items">
+                    @foreach (var item in group.Items)
+                    {
+                        if (item.IsAvailable)
+                        {
+                            <NavLink class="quami-menu-link" href="@item.Route">@item.Name</NavLink>
+                        }
+                        else
+                        {
+                            @* Hazır değil: soluk, bağlantı değil *@
+                            <span class="quami-menu-soon" title="@L["Nav.ComingSoon"]">
+                                @item.Name <em>(@L["Nav.ComingSoon"])</em>
+                            </span>
+                        }
+                    }
+                </div>
+            }
+        }
+    }
+</nav>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+@code {
+    private IReadOnlyList<MenuGroupView> _groups = [];
+    private string? _openGroupCode;
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        await LoadAsync();
+    }
 
+    private async Task LoadAsync()
+    {
+        _groups = TenantContext.TenantId is { } tenantId
+            ? await MenuService.GetMenuAsync(tenantId)
+            : [];
+
+        OpenGroupForCurrentRoute();
+    }
+
+    /// <summary>Tek seferde tek grup açık. Açık gruba yeniden tıklanırsa kapanır.</summary>
+    private void Toggle(string groupCode) =>
+        _openGroupCode = _openGroupCode == groupCode ? null : groupCode;
+
+    /// <summary>Bulunulan sayfanın grubu kendiliğinden açılır.</summary>
+    private void OpenGroupForCurrentRoute()
+    {
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        var cut = path.IndexOfAny(['?', '#']);
+        if (cut >= 0) path = path[..cut];
+        if (path.Length > 1) path = path.TrimEnd('/');
+
+        var match = _groups.FirstOrDefault(g =>
+            !g.IsDirectLink &&
+            g.Items.Any(i => string.Equals(i.Route, path, StringComparison.OrdinalIgnoreCase)));
+
+        if (match is not null)
+            _openGroupCode = match.Code;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        OpenGroupForCurrentRoute();
+        StateHasChanged();
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

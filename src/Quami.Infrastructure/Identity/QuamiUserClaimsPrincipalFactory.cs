@@ -35,6 +35,8 @@ public sealed class QuamiUserClaimsPrincipalFactory(
         identity.AddClaim(new Claim(QuamiClaimTypes.TenantId, businessUser.TenantId.ToString()));
         identity.AddClaim(new Claim(QuamiClaimTypes.IsSystemAdmin,
             businessUser.IsSystemAdmin ? "true" : "false"));
+        identity.AddClaim(new Claim(QuamiClaimTypes.Language,
+            businessUser.Language == Quami.Domain.Enums.Language.En ? "en" : "tr"));
 
         return identity;
     }

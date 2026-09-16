@@ -1,0 +1,59 @@
+@page "/tasks"
+@page "/suggestions"
+@page "/corrective-actions"
+@page "/documents"
+@page "/contracts"
+@page "/records"
+@page "/audit-management"
+@page "/compliance"
+@page "/performance"
+@page "/supplier-evaluation"
+@page "/training"
+@page "/survey"
+@page "/maintenance"
+@page "/threat-model"
+@page "/information-security"
+@page "/quality"
+@page "/ohs"
+@page "/environment"
+@page "/food-safety"
+@page "/reports"
+@page "/users"
+@page "/definitions"
+@using Quami.Application.Abstractions
+@using Quami.Application.Menu
+@inject IMenuService MenuService
+@inject ITenantContext TenantContext
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+
+@* GEÇİCİ İSKELE: henüz yazılmamış modüllerin yerini tutar; menü ve lisans
+   kontrolü çalışsın diye durur. Bir modül yazıldığında kendi sayfası gelir ve
+   o modülün adresi yukarıdaki listeden ÇIKARILIR. Liste bitince bu dosya silinir. *@
+
+<PageTitle>@(_moduleName ?? L["Module.NotBuilt.Title"].Value) — @L["App.Name"]</PageTitle>
+
+<h1>@(_moduleName ?? L["Module.NotBuilt.Title"].Value)</h1>
+
+<div class="quami-panel">
+    <p class="quami-muted">@L["Module.NotBuilt.Message"]</p>
+</div>
+
+@code {
+    private string? _moduleName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TenantContext.TenantId is not { } tenantId)
+            return;
+
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (path.Length > 1) path = path.TrimEnd('/');
+
+        var menu = await MenuService.GetMenuAsync(tenantId);
+        _moduleName = menu
+            .SelectMany(g => g.Items)
+            .FirstOrDefault(i => string.Equals(i.Route, path, StringComparison.OrdinalIgnoreCase))
+            ?.Name;
+    }
+}

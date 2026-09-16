@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quami.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Quami.Infrastructure.Persistence;
 namespace Quami.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(QuamiDbContext))]
-    partial class QuamiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916220545_MenuGroupDirectLink")]
+    partial class MenuGroupDirectLink
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

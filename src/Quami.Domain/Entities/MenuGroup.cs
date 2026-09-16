@@ -16,6 +16,13 @@ public class MenuGroup : BaseEntity
 
     public int SortOrder { get; set; }
 
+    /// <summary>
+    /// True ise menüde açılır başlık değil, doğrudan bağlantı olarak çizilir
+    /// (Ana sayfa böyledir). Tek modülü varsa o modülün adresine gider.
+    /// Menünün davranışı koda değil, bu veriye bağlıdır.
+    /// </summary>
+    public bool IsDirectLink { get; set; }
+
     /// <summary>İkon adı (tema ikon setinden).</summary>
     public string? Icon { get; set; }
 

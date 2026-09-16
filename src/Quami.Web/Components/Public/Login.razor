@@ -9,41 +9,37 @@
 @layout Quami.Web.Components.Layout.BareLayout
 @inject IAuthenticationProvider AuthenticationProvider
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Giriş — Quami</PageTitle>
+<PageTitle>@L["Login.Title"] — @L["App.Name"]</PageTitle>
 
-<h1>Quami</h1>
+<h1>Qu<span>a</span>mi</h1>
 
 <EditForm Model="Input" FormName="login" OnValidSubmit="SignInAsync">
-    <DataAnnotationsValidator />
-
     @if (_message is not null)
     {
-        <p role="alert">@_message</p>
+        <p class="quami-alert" role="alert">@_message</p>
     }
 
-    <p>
-        <label for="tenant">Kurum kodu</label>
+    <div class="quami-field">
+        <label for="tenant">@L["Login.TenantCode"]</label>
         <InputText id="tenant" @bind-Value="Input.TenantShortName" autocomplete="organization" />
-        <ValidationMessage For="() => Input.TenantShortName" />
-    </p>
-    <p>
-        <label for="user">Kullanıcı adı</label>
+    </div>
+    <div class="quami-field">
+        <label for="user">@L["Login.UserName"]</label>
         <InputText id="user" @bind-Value="Input.UserName" autocomplete="username" />
-        <ValidationMessage For="() => Input.UserName" />
-    </p>
-    <p>
-        <label for="pass">Parola</label>
+    </div>
+    <div class="quami-field">
+        <label for="pass">@L["Login.Password"]</label>
         <InputText id="pass" type="password" @bind-Value="Input.Password" autocomplete="current-password" />
-        <ValidationMessage For="() => Input.Password" />
-    </p>
-    <p>
+    </div>
+    <div class="quami-field">
         <label>
-            <InputCheckbox @bind-Value="Input.RememberMe" /> Beni hatırla
+            <InputCheckbox @bind-Value="Input.RememberMe" /> @L["Login.RememberMe"]
         </label>
-    </p>
+    </div>
 
-    <button type="submit">Giriş</button>
+    <button type="submit" class="quami-button">@L["Login.Submit"]</button>
 </EditForm>
 
 @code {
@@ -60,6 +56,11 @@
 
     private async Task SignInAsync()
     {
+        // Zorunlu alan kontrolü kodda yapılır; metinler yine kaynak dosyasından gelir.
+        _message = FirstMissingFieldMessage();
+        if (_message is not null)
+            return;
+
         var status = await AuthenticationProvider.SignInWithPasswordAsync(
             Input.TenantShortName, Input.UserName, Input.Password, Input.RememberMe);
 
@@ -72,13 +73,22 @@
 
         _message = status switch
         {
-            // Hangi bilginin yanlış olduğu söylenmez: kullanıcı adı taraması engellenir.
-            SignInStatus.InvalidCredentials => "Kurum kodu, kullanıcı adı veya parola hatalı.",
-            SignInStatus.LockedOut => "Hesap art arda hatalı deneme nedeniyle geçici olarak kilitlendi. Bir süre sonra tekrar deneyin.",
-            SignInStatus.NotAllowed => "Bu hesapla giriş yapılamıyor. Kurum yöneticinize başvurun.",
-            SignInStatus.RequiresTwoFactor => "İki adımlı doğrulama gerekiyor.",
-            _ => "Giriş yapılamadı."
+            // Kurum yok / kullanıcı yok / parola yanlış: ÜÇÜ DE aynı mesaj.
+            // Ayrım yalnızca kimlik olay günlüğünde tutulur.
+            SignInStatus.InvalidCredentials => L["Login.Error.InvalidCredentials"],
+            SignInStatus.LockedOut => L["Login.Error.LockedOut"],
+            SignInStatus.NotAllowed => L["Login.Error.NotAllowed"],
+            SignInStatus.RequiresTwoFactor => L["Login.Error.TwoFactor"],
+            _ => L["Login.Error.Generic"]
         };
+    }
+
+    private string? FirstMissingFieldMessage()
+    {
+        if (string.IsNullOrWhiteSpace(Input.TenantShortName)) return L["Login.Validation.TenantRequired"];
+        if (string.IsNullOrWhiteSpace(Input.UserName)) return L["Login.Validation.UserNameRequired"];
+        if (string.IsNullOrWhiteSpace(Input.Password)) return L["Login.Validation.PasswordRequired"];
+        return null;
     }
 
     /// <summary>Açık yönlendirme (open redirect) koruması: yalnızca site içi adresler.</summary>
@@ -92,15 +102,9 @@
 
     private sealed class LoginInput
     {
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Kurum kodu gerekli.")]
         public string TenantShortName { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Kullanıcı adı gerekli.")]
         public string UserName { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Parola gerekli.")]
         public string Password { get; set; } = string.Empty;
-
         public bool RememberMe { get; set; }
     }
 }

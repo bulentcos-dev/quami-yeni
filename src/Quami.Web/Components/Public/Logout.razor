@@ -8,15 +8,16 @@
 @layout Quami.Web.Components.Layout.BareLayout
 @inject IAuthenticationProvider AuthenticationProvider
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Çıkış — Quami</PageTitle>
+<PageTitle>@L["Logout.Title"] — @L["App.Name"]</PageTitle>
 
-<h1>Çıkış</h1>
+<h1>Qu<span>a</span>mi</h1>
 
-@* Çıkış POST ile yapılır: GET bağlantısı başka sitelerden tetiklenebilir. *@
+@* Çıkış POST ile yapılır: GET bağlantısı başka sitelerden tetiklenebilirdi. *@
 <EditForm Model="this" FormName="logout" OnValidSubmit="SignOutAsync">
-    <p>Oturumu kapatmak istiyor musunuz?</p>
-    <button type="submit">Çıkış yap</button>
+    <p>@L["Logout.Question"]</p>
+    <button type="submit" class="quami-button">@L["Logout.Submit"]</button>
 </EditForm>
 
 @code {

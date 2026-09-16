@@ -1,19 +1,32 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> L
 
-<div class="page">
-    <div class="sidebar">
+<div class="quami-shell">
+    <aside class="quami-sidebar">
+        <div class="quami-brand">Qu<span>a</span>mi</div>
         <NavMenu />
+    </aside>
+
+    <div class="quami-main">
+        <header class="quami-topbar">
+            <LanguageSwitcher />
+            <AuthorizeView>
+                <Authorized>
+                    <span class="quami-user">@context.User.Identity?.Name</span>
+                </Authorized>
+            </AuthorizeView>
+            <a href="/logout">@L["TopBar.SignOut"]</a>
+        </header>
+
+        <main class="quami-content">
+            @* Lisans kontrolü sunucuda burada yapılır: lisanssız modülün
+               sayfası hiç oluşturulmaz, adres elle yazılsa bile. *@
+            <ModuleAccessGuard>
+                @Body
+            </ModuleAccessGuard>
+        </main>
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>

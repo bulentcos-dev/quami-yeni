@@ -1,7 +1,10 @@
-﻿@page "/"
+@page "/"
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@L["Home.Title"] — @L["App.Name"]</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>@L["Home.Title"]</h1>
 
-Welcome to your new app.
+<div class="quami-panel">
+    <p class="quami-muted">@L["Home.DashboardPending"]</p>
+</div>

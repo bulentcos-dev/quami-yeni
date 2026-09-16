@@ -1,7 +1,9 @@
 using Quami.Web.Components;
 
+using Microsoft.AspNetCore.Localization;
 using Quami.Infrastructure;
 using Quami.Infrastructure.Persistence.Seed;
+using Quami.Web.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,23 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Kimlik, oturum çerezi ve oturumdan beslenen kiracı bağlamı.
 builder.Services.AddQuamiIdentity();
 builder.Services.AddCascadingAuthenticationState();
+
+// Çok dillilik: metinler Resources/SharedResource*.resx dosyalarından gelir.
+// Varsayılan Türkçe. Sıra: çerez (açık seçim) → kullanıcının kayıtlı dili.
+// Tarayıcının Accept-Language başlığı bilerek kullanılmaz; davranış öngörülebilir olsun.
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.SetDefaultCulture(CultureEndpoints.SupportedCultures[0])
+        .AddSupportedCultures(CultureEndpoints.SupportedCultures)
+        .AddSupportedUICultures(CultureEndpoints.SupportedCultures);
+
+    options.RequestCultureProviders =
+    [
+        new CookieRequestCultureProvider(),
+        new UserClaimCultureProvider()
+    ];
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -29,8 +48,12 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+// Kimlikten SONRA: kullanıcının kayıtlı dilini okuyabilmek için oturum gerekli.
+app.UseRequestLocalization();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+app.MapCultureEndpoint();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
