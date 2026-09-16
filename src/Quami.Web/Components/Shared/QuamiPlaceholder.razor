@@ -1,0 +1,34 @@
+@inject IStringLocalizer<SharedResource> L
+
+@* Yer tutucu alan. İçeriği henüz yazılmamış bölümlerin yerini tutar ki
+   içerik geldiğinde yerleşim bozulmasın. Yükseklik verilerek gerçek
+   bileşenin kaplayacağı alan şimdiden ayrılabilir. *@
+<section class="quami-placeholder" style="@(MinHeight is null ? null : $"min-height:{MinHeight}")">
+    <header class="quami-placeholder-head">
+        @if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            <QuamiIcon Name="@Icon" Size="18" />
+        }
+        <h2>@Title</h2>
+    </header>
+
+    <p class="quami-muted">@(Note ?? L["Placeholder.Note"].Value)</p>
+
+    @if (ChildContent is not null)
+    {
+        <div class="quami-placeholder-body">@ChildContent</div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Alanın ne olacağını anlatan not. Verilmezse ortak metin kullanılır.</summary>
+    [Parameter] public string? Note { get; set; }
+
+    /// <summary>Ör. "240px". Gerçek içeriğin kaplayacağı yeri şimdiden ayırır.</summary>
+    [Parameter] public string? MinHeight { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

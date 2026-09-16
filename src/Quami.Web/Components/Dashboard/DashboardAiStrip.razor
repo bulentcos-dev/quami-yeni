@@ -1,0 +1,22 @@
+@inject IStringLocalizer<SharedResource> L
+
+@* YAPAY ZEKÂ ÖNCELİK ŞERİDİ — faz 2.
+   Bu fazda yapay zekâ yok, bu yüzden hiçbir şey çizmez. Yeri yerleşimde
+   ayrılmıştır: Ana sayfa bu bileşeni en üstte çağırır, içerik geldiğinde
+   sayfanın gerisi olduğu gibi kalır, aşağı kayar.
+
+   Faz 2'de yapılacak: Show="true" verilecek ve şerit sıralı "bugün şuna bak"
+   cümleleriyle doldurulacak. *@
+@if (Show)
+{
+    <QuamiPlaceholder Title="@L["Dashboard.AiStrip"]" Icon="lightbulb"
+                      Note="@L["Dashboard.AiStripNote"]" />
+}
+
+@code {
+    /// <summary>
+    /// Faz 2'de true olacak. Şimdilik false: şerit hiç çizilmez,
+    /// yalnızca yerleşimdeki yeri ayrılmış durumda.
+    /// </summary>
+    [Parameter] public bool Show { get; set; }
+}

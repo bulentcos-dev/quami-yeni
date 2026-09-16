@@ -196,4 +196,46 @@
   <data name="Table.Total" xml:space="preserve">
     <value>Toplam {0} kayıt</value>
   </data>
+  <data name="Dashboard.AiStrip" xml:space="preserve">
+    <value>Öncelik şeridi</value>
+  </data>
+  <data name="Dashboard.AiStripNote" xml:space="preserve">
+    <value>Yapay zekâ önceliklendirmesi için ayrılmış alan. Bu fazda boş; sonraki fazda dolacak.</value>
+  </data>
+  <data name="Dashboard.Announcements" xml:space="preserve">
+    <value>Duyurular</value>
+  </data>
+  <data name="Dashboard.AnnouncementsNote" xml:space="preserve">
+    <value>Duyurular elle girilecek.</value>
+  </data>
+  <data name="Dashboard.Calendar" xml:space="preserve">
+    <value>Takvim</value>
+  </data>
+  <data name="Dashboard.CalendarNote" xml:space="preserve">
+    <value>Denetim, sözleşme, doküman ve bakım tarihleri kendiliğinden düşecek; elle kayıt da eklenebilecek.</value>
+  </data>
+  <data name="Dashboard.Chart.Capa" xml:space="preserve">
+    <value>Düzeltici faaliyet — son 6 ay</value>
+  </data>
+  <data name="Dashboard.Chart.CapaNote" xml:space="preserve">
+    <value>Aylık açılan ve kapanan düzeltici faaliyet akışı (çizgi grafik).</value>
+  </data>
+  <data name="Dashboard.Chart.Risk" xml:space="preserve">
+    <value>Risk seviyesi dağılımı</value>
+  </data>
+  <data name="Dashboard.Chart.RiskNote" xml:space="preserve">
+    <value>Risklerin seviyelerine göre dağılımı (halka grafik).</value>
+  </data>
+  <data name="Dashboard.Module.Pending" xml:space="preserve">
+    <value>Özet, modül yapıldığında burada görünecek.</value>
+  </data>
+  <data name="Dashboard.Modules" xml:space="preserve">
+    <value>Modüller</value>
+  </data>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>Ana sayfa</value>
+  </data>
+  <data name="Placeholder.Note" xml:space="preserve">
+    <value>Bu alan yer tutucudur, içerik sonraki adımlarda gelecek.</value>
+  </data>
 </root>

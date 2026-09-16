@@ -1,0 +1,31 @@
+@* Kart. Href verilirse tıklanabilir olur ve o adrese gider. *@
+@if (string.IsNullOrWhiteSpace(Href))
+{
+    <div class="quami-card-box @Class">
+        @Header
+        @ChildContent
+    </div>
+}
+else
+{
+    <a class="quami-card-box quami-card-box--link @Class" href="@Href">
+        @Header
+        @ChildContent
+    </a>
+}
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private RenderFragment Header => @<header class="quami-card-head">
+        @if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            <QuamiIcon Name="@Icon" Size="18" Class="quami-card-icon" />
+        }
+        <span class="quami-card-title">@Title</span>
+    </header>;
+}

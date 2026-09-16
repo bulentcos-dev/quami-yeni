@@ -196,4 +196,46 @@
   <data name="Table.Total" xml:space="preserve">
     <value>{0} records in total</value>
   </data>
+  <data name="Dashboard.AiStrip" xml:space="preserve">
+    <value>Priority strip</value>
+  </data>
+  <data name="Dashboard.AiStripNote" xml:space="preserve">
+    <value>Area reserved for AI prioritisation. Empty in this phase; it fills in the next phase.</value>
+  </data>
+  <data name="Dashboard.Announcements" xml:space="preserve">
+    <value>Announcements</value>
+  </data>
+  <data name="Dashboard.AnnouncementsNote" xml:space="preserve">
+    <value>Announcements will be entered by hand.</value>
+  </data>
+  <data name="Dashboard.Calendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="Dashboard.CalendarNote" xml:space="preserve">
+    <value>Audit, contract, document and maintenance dates will fill in automatically; entries can also be added by hand.</value>
+  </data>
+  <data name="Dashboard.Chart.Capa" xml:space="preserve">
+    <value>Corrective action — last 6 months</value>
+  </data>
+  <data name="Dashboard.Chart.CapaNote" xml:space="preserve">
+    <value>Monthly opened and closed corrective actions (line chart).</value>
+  </data>
+  <data name="Dashboard.Chart.Risk" xml:space="preserve">
+    <value>Risk level distribution</value>
+  </data>
+  <data name="Dashboard.Chart.RiskNote" xml:space="preserve">
+    <value>Distribution of risks by level (donut chart).</value>
+  </data>
+  <data name="Dashboard.Module.Pending" xml:space="preserve">
+    <value>The summary will appear here once the module is built.</value>
+  </data>
+  <data name="Dashboard.Modules" xml:space="preserve">
+    <value>Modules</value>
+  </data>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Placeholder.Note" xml:space="preserve">
+    <value>This area is a placeholder; content arrives in later steps.</value>
+  </data>
 </root>

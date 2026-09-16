@@ -1,10 +1,82 @@
 @page "/"
+@using Quami.Application.Abstractions
+@using Quami.Application.Menu
+@using Quami.Web.Components.Dashboard
+@inject IMenuService MenuService
+@inject ITenantContext TenantContext
 @inject IStringLocalizer<SharedResource> L
 
-<PageTitle>@L["Home.Title"] — @L["App.Name"]</PageTitle>
+@* ANA SAYFA (gösterge paneli) — bu adımda VERİ YOK, yalnızca yerleşim ve
+   yer tutucular. Her bölüm ortak bileşenlerle kurulur; bu sayfaya özel stil
+   yazılmaz, ortak yerleşim sınıfları kullanılır. *@
 
-<h1>@L["Home.Title"]</h1>
+<PageTitle>@L["Dashboard.Title"] — @L["App.Name"]</PageTitle>
 
-<div class="quami-panel">
-    <p class="quami-muted">@L["Home.DashboardPending"]</p>
+<QuamiPageHeader Title="@L["Dashboard.Title"]" Icon="house" />
+
+<div class="quami-stack">
+
+    @* 1. Yapay zekâ öncelik şeridi: yeri ayrıldı, faz 2'de dolacak. *@
+    <DashboardAiStrip />
+
+    @* 2. Modül kartları: kiracının etkin modüllerinden kurulur, koda gömülü
+          liste yok. Kart tıklanınca modüle gider; özet içeriği modül
+          yazıldığında gelecek. *@
+    <section>
+        <h2>@L["Dashboard.Modules"]</h2>
+
+        @if (_loading)
+        {
+            <QuamiSpinner />
+        }
+        else
+        {
+            <div class="quami-grid quami-grid--cards">
+                @foreach (var module in _modules)
+                {
+                    <QuamiCard Title="@module.Name" Icon="@module.Icon" Href="@module.Route">
+                        <p class="quami-muted">@L["Dashboard.Module.Pending"]</p>
+                    </QuamiCard>
+                }
+            </div>
+        }
+    </section>
+
+    @* 3. İki grafik alanı. Grafik kütüphanesi henüz seçilmedi; kutular yer tutuyor. *@
+    <div class="quami-grid quami-grid--halves">
+        <QuamiPlaceholder Title="@L["Dashboard.Chart.Capa"]" Icon="trending-up"
+                          Note="@L["Dashboard.Chart.CapaNote"]" MinHeight="220px" />
+        <QuamiPlaceholder Title="@L["Dashboard.Chart.Risk"]" Icon="chart-column"
+                          Note="@L["Dashboard.Chart.RiskNote"]" MinHeight="220px" />
+    </div>
+
+    @* 4. Takvim ve duyurular. *@
+    <div class="quami-grid quami-grid--halves">
+        <QuamiPlaceholder Title="@L["Dashboard.Calendar"]" Icon="clipboard-check"
+                          Note="@L["Dashboard.CalendarNote"]" MinHeight="240px" />
+        <QuamiPlaceholder Title="@L["Dashboard.Announcements"]" Icon="info"
+                          Note="@L["Dashboard.AnnouncementsNote"]" MinHeight="240px" />
+    </div>
+
 </div>
+
+@code {
+    private IReadOnlyList<MenuItemView> _modules = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TenantContext.TenantId is { } tenantId)
+        {
+            var menu = await MenuService.GetMenuAsync(tenantId);
+
+            // Ana sayfanın kendisi kart olarak gösterilmez.
+            _modules = menu
+                .SelectMany(group => group.Items)
+                .Where(item => item.IsAvailable && item.Route != "/")
+                .ToList();
+        }
+
+        _loading = false;
+    }
+}

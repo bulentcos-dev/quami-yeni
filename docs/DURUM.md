@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
 Son güncelleme: 17 Eylül 2026
-Son commit: adım 7: blazor yerleşimi, akordeon menü, tema (bkz. `git log`)
+Son commit: ortak bileşenler ve lucide ikonları (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -24,9 +24,9 @@ yerden devam eder. Her adım bitince güncellenir.
 | 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | BİTTİ |
 | 6 | Kimlik ve oturum, ITenantContext, kimlik olay günlüğü | BİTTİ |
 | 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | BİTTİ |
-| 7b | İkonlar (Lucide) ve ortak bileşen kümesi | BİTTİ (commit bekliyor) |
-| 8 | Boş dashboard sayfası | SIRADA |
-| 9 | IFileStorage + Quami.Api iskeleti | bekliyor |
+| 7b | İkonlar (Lucide) ve ortak bileşen kümesi | BİTTİ |
+| 8 | Boş dashboard sayfası | BİTTİ (commit bekliyor) |
+| 9 | IFileStorage + Quami.Api iskeleti | SIRADA |
 | 10 | İlk commit | bekliyor (adım 1 ayrıca commit edildi) |
 
 Çalışma kuralı: tek adım, tek komut; adım bitince Bülent'e rapor, onay, sonraki adım.
@@ -477,6 +477,42 @@ Hepsi tema değişkenlerini kullanır. **Modül içine stil yazılmaz, bunlar ku
 - Onay penceresi açıldı, "Sil" onayı çalıştı, pencere kapandı.
 - Form doğrulaması: boş zorunlu alanla kaydetmeye çalışınca alanın altında
   kırmızı mesaj çıktı, form gönderilmedi.
+- Sunucu günlüğünde hata yok.
+
+## Adım 8'de üretilenler ve kararlar
+
+Bu adımda **veri yok**: yalnızca yerleşim ve yer tutucular. Sayfaya özel stil
+yazılmadı; her şey ortak bileşenler ve ortak yerleşim sınıflarıyla kuruldu.
+
+- `Components/Pages/Home.razor` (adres `/`) gösterge paneli oldu. Sırayla:
+  1. **Yapay zekâ öncelik şeridi** — `Components/Dashboard/DashboardAiStrip.razor`.
+     Bu fazda `Show=false`, yani hiç çizilmez. Yeri yerleşimde ayrılmıştır:
+     faz 2'de `Show="true"` verilecek, şerit en üste girecek, sayfanın gerisi
+     olduğu gibi aşağı kayacak. Sınandı: şerit açıkken yerleşim bozulmadı.
+  2. **Modül kartları** — kiracının etkin modüllerinden kurulur, koda gömülü
+     liste yok. Her kart modülün ikonunu ve adını gösterir, tıklanınca modüle
+     gider. Özet içeriği modül yazıldığında kartın içine gelecek.
+     Ana sayfa kendi kartını göstermez.
+  3. **İki grafik alanı** — düzeltici faaliyet 6 aylık akış (çizgi) ve risk
+     seviyesi dağılımı (halka). Şimdilik yer tutucu kutu.
+     **Grafik kütüphanesi seçilmedi**; grafikler gerçekten çizilirken konuşulacak.
+  4. **Takvim** — ileride denetim/sözleşme/doküman/bakım tarihleriyle
+     kendiliğinden dolacak, elle kayıt da eklenebilecek.
+  5. **Duyurular** — elle girilecek.
+- Yeni ortak bileşenler: `QuamiPlaceholder` (yer tutucu alan; kesik çerçeve,
+  başlık, açıklama, istenirse en az yükseklik) ve `QuamiCard` (Href verilirse
+  tıklanabilir kart).
+- Yeni ortak yerleşim sınıfları (`app.css`): `.quami-stack`, `.quami-grid`,
+  `.quami-grid--halves`, `.quami-grid--cards`. Bunlar sayfaya değil temaya aittir.
+- Tüm metinler kaynak dosyalarında (14 yeni anahtar).
+
+### Adım 8 doğrulaması (tarayıcıda)
+- 20 modül kartı çizildi, her biri kendi Lucide ikonuyla.
+- Karta tıklanınca modülün adresine gidildi.
+- Dört yer tutucu alan (iki grafik, takvim, duyurular) göründü; kesik çerçeve
+  onları gerçek kartlardan ayırıyor.
+- Şerit geçici olarak açılıp kapatıldı: açıkken sayfa aşağı kaydı, yerleşim
+  bozulmadı. Sonra gizli haline döndürüldü.
 - Sunucu günlüğünde hata yok.
 
 ## Açık kararlar (Bülent'e ait)
