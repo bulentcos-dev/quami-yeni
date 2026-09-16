@@ -1,0 +1,29 @@
+@typeparam TItem
+@* Veri tablosunun tek bir sütunu. Kendi başına çıktı üretmez; kaydolur ve
+   tablo onu çizer. Kullanım:
+   <QuamiColumn TItem="X" Title="Ad" SortBy="x => x.Name" Context="row">@row.Name</QuamiColumn> *@
+@code {
+    [CascadingParameter] private QuamiDataTable<TItem>? Table { get; set; }
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    /// <summary>Verilirse sütun başlığı tıklanabilir olur ve bu değere göre sıralanır.</summary>
+    [Parameter] public Func<TItem, object?>? SortBy { get; set; }
+
+    /// <summary>Hücre içeriği.</summary>
+    [Parameter, EditorRequired] public RenderFragment<TItem>? ChildContent { get; set; }
+
+    /// <summary>Hizalama: "start" (varsayılan), "center", "end".</summary>
+    [Parameter] public string Align { get; set; } = "start";
+
+    /// <summary>Sabit genişlik, ör. "120px".</summary>
+    [Parameter] public string? Width { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Table is null)
+            throw new InvalidOperationException($"{nameof(QuamiColumn<TItem>)} yalnızca {nameof(QuamiDataTable<TItem>)} içinde kullanılabilir.");
+
+        Table.AddColumn(this);
+    }
+}

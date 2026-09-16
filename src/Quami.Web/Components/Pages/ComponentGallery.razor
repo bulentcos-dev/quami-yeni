@@ -1,0 +1,173 @@
+@page "/dev/components"
+@using System.ComponentModel.DataAnnotations
+@inject IStringLocalizer<SharedResource> L
+
+@* GELİŞTİRİCİ SAYFASI — menüde yoktur, bir modüle ait değildir.
+   Ortak bileşenlerin canlı örnekleri; modül yazarken buraya bakılır. *@
+
+<PageTitle>Ortak bileşenler — @L["App.Name"]</PageTitle>
+
+<QuamiPageHeader Title="Ortak bileşenler" Icon="sliders-horizontal"
+                 Description="Her modül bu bileşenleri kullanır. Modül içine stil yazılmaz.">
+    <Actions>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" Icon="search">İkincil</QuamiButton>
+        <QuamiButton Icon="plus">Birincil eylem</QuamiButton>
+    </Actions>
+</QuamiPageHeader>
+
+<div class="quami-panel" style="margin-bottom:1.25rem">
+    <h2>Uyarı ve bilgi kutuları</h2>
+    <QuamiAlert Variant="QuamiAlert.AlertVariant.Info" Title="Bilgi">Denetim programı yayımlandı.</QuamiAlert>
+    <QuamiAlert Variant="QuamiAlert.AlertVariant.Success" Title="Başarılı">Kayıt tamamlandı.</QuamiAlert>
+    <QuamiAlert Variant="QuamiAlert.AlertVariant.Warning" Title="Uyarı">Üç sözleşmenin süresi bu ay doluyor.</QuamiAlert>
+    <QuamiAlert Variant="QuamiAlert.AlertVariant.Danger" Title="Dikkat">İki düzeltici faaliyet gecikti.</QuamiAlert>
+</div>
+
+<div class="quami-panel" style="margin-bottom:1.25rem">
+    <h2>Butonlar</h2>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center">
+        <QuamiButton>Birincil</QuamiButton>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary">İkincil</QuamiButton>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Danger" Icon="x">Tehlikeli</QuamiButton>
+        <QuamiButton Disabled="true">Kapalı</QuamiButton>
+        <QuamiButton Busy="_busy" OnClick="RunBusyAsync">İşlem yap</QuamiButton>
+    </div>
+</div>
+
+<div class="quami-panel" style="margin-bottom:1.25rem">
+    <h2>Form alanları</h2>
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0 1rem">
+            <QuamiTextField Label="Doküman adı" Required="true" @bind-Value="_form.Name" Hint="Kısa ve ayırt edici olsun." />
+            <QuamiNumberField TValue="int" Label="Revizyon no" @bind-Value="_form.Revision" />
+            <QuamiDateField TValue="DateOnly?" Label="Yayım tarihi" @bind-Value="_form.PublishedOn" />
+            <QuamiSelectField TValue="string" Label="Durum" @bind-Value="_form.Status" Options="_statusOptions" />
+        </div>
+        <QuamiTextAreaField Label="Açıklama" @bind-Value="_form.Description" Rows="3" />
+        <QuamiCheckboxField Label="Onaya gönder" @bind-Value="_form.SendForApproval" />
+
+        <div style="display:flex; gap:.5rem; margin-top:.5rem">
+            <QuamiButton Submit="true" Icon="circle-check">Kaydet</QuamiButton>
+            <QuamiButton Variant="QuamiButton.ButtonVariant.Danger" Icon="x" OnClick="() => _confirmVisible = true">Sil</QuamiButton>
+        </div>
+    </EditForm>
+
+    @if (_saved)
+    {
+        <div style="margin-top:1rem">
+            <QuamiAlert Variant="QuamiAlert.AlertVariant.Success">Form doğrulandı ve kaydedildi (örnek).</QuamiAlert>
+        </div>
+    }
+</div>
+
+<div class="quami-panel" style="margin-bottom:1.25rem">
+    <h2>Veri tablosu</h2>
+    <div style="display:flex; gap:.5rem; margin-bottom:.75rem; flex-wrap:wrap">
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" OnClick="() => _tableLoading = !_tableLoading">Yükleniyor durumunu değiştir</QuamiButton>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" OnClick="ToggleEmpty">Boş durumu değiştir</QuamiButton>
+    </div>
+
+    <QuamiDataTable TItem="SampleRow" Items="_rows" PageSize="5" Loading="_tableLoading">
+        <QuamiColumn TItem="SampleRow" Title="Kod" SortBy="r => r.Code" Width="110" Context="row">@row.Code</QuamiColumn>
+        <QuamiColumn TItem="SampleRow" Title="Ad" SortBy="r => r.Name" Context="row">@row.Name</QuamiColumn>
+        <QuamiColumn TItem="SampleRow" Title="Durum" SortBy="r => r.Status" Context="row">@row.Status</QuamiColumn>
+        <QuamiColumn TItem="SampleRow" Title="Tarih" SortBy="r => r.Date" Align="end" Context="row">@row.Date.ToString("dd.MM.yyyy")</QuamiColumn>
+    </QuamiDataTable>
+</div>
+
+<div class="quami-panel">
+    <h2>Pencere ve yükleniyor göstergesi</h2>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center">
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" OnClick="() => _modalVisible = true">Pencereyi aç</QuamiButton>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Danger" OnClick="() => _confirmVisible = true">Onay penceresi</QuamiButton>
+        <QuamiSpinner Inline="true" />
+    </div>
+</div>
+
+<QuamiModal @bind-Visible="_modalVisible" Title="Örnek pencere">
+    <ChildContent>
+        <p>Pencere içeriği buraya gelir. Esc ile, çarpı ile veya arka plana tıklayarak kapanır.</p>
+        <QuamiTextField Label="Not" @bind-Value="_modalNote" />
+    </ChildContent>
+    <Footer>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" OnClick="() => _modalVisible = false">@L["Common.Cancel"]</QuamiButton>
+        <QuamiButton OnClick="() => _modalVisible = false">@L["Common.Confirm"]</QuamiButton>
+    </Footer>
+</QuamiModal>
+
+<QuamiConfirmDialog @bind-Visible="_confirmVisible"
+                    Title="Kayıt silinsin mi?"
+                    Message="Bu işlem geri alınamaz."
+                    ConfirmText="Sil"
+                    OnConfirm="ConfirmDeleteAsync" />
+
+@if (_deleted)
+{
+    <div style="margin-top:1rem"><QuamiAlert Variant="QuamiAlert.AlertVariant.Warning">Silme onaylandı (örnek).</QuamiAlert></div>
+}
+
+@code {
+    private bool _busy, _saved, _deleted, _modalVisible, _confirmVisible, _tableLoading;
+    private string? _modalNote;
+    private readonly SampleForm _form = new();
+
+    private readonly IReadOnlyList<QuamiOption<string>> _statusOptions =
+    [
+        new("draft", "Taslak"),
+        new("review", "İncelemede"),
+        new("published", "Yayımlandı")
+    ];
+
+    private List<SampleRow> _rows = BuildRows();
+
+    private static List<SampleRow> BuildRows() =>
+    [
+        new("DOK-001", "Bilgi güvenliği politikası", "Yayımlandı", new DateOnly(2026, 2, 11)),
+        new("DOK-002", "Erişim yönetimi prosedürü", "İncelemede", new DateOnly(2026, 3, 4)),
+        new("DOK-003", "Tedarikçi değerlendirme talimatı", "Taslak", new DateOnly(2026, 1, 22)),
+        new("DOK-004", "İş sürekliliği planı", "Yayımlandı", new DateOnly(2025, 12, 9)),
+        new("DOK-005", "Olay müdahale prosedürü", "Yayımlandı", new DateOnly(2026, 4, 2)),
+        new("DOK-006", "Yedekleme talimatı", "Taslak", new DateOnly(2026, 5, 18)),
+        new("DOK-007", "Eğitim planı", "İncelemede", new DateOnly(2026, 6, 1))
+    ];
+
+    private void ToggleEmpty() => _rows = _rows.Count == 0 ? BuildRows() : [];
+
+    private async Task RunBusyAsync()
+    {
+        _busy = true;
+        await Task.Delay(900);
+        _busy = false;
+    }
+
+    private Task SaveAsync()
+    {
+        _saved = true;
+        return Task.CompletedTask;
+    }
+
+    private Task ConfirmDeleteAsync()
+    {
+        _deleted = true;
+        _confirmVisible = false;
+        return Task.CompletedTask;
+    }
+
+    private sealed class SampleForm
+    {
+        [Required(ErrorMessage = "Doküman adı zorunludur.")]
+        [StringLength(100)]
+        public string? Name { get; set; }
+
+        [Range(0, 999)]
+        public int Revision { get; set; }
+
+        public DateOnly? PublishedOn { get; set; }
+        public string? Status { get; set; }
+        public string? Description { get; set; }
+        public bool SendForApproval { get; set; }
+    }
+
+    private sealed record SampleRow(string Code, string Name, string Status, DateOnly Date);
+}

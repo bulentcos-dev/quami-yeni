@@ -1,0 +1,33 @@
+@* Çok satırlı metin alanı. *@
+<QuamiFieldShell Label="@Label" For="@_id" Hint="@Hint" Required="@Required" Class="@Class">
+    <ChildContent>
+        <InputTextArea id="@_id" class="quami-input quami-textarea" rows="@Rows"
+                       Value="@Value" ValueChanged="@ValueChanged" ValueExpression="@ValueExpression"
+                       placeholder="@Placeholder" disabled="@Disabled" maxlength="@MaxLength" />
+    </ChildContent>
+    <Validation>
+        @if (EditContext is not null && ValueExpression is not null)
+        {
+            <ValidationMessage For="@ValueExpression" class="quami-validation" />
+        }
+    </Validation>
+</QuamiFieldShell>
+
+@code {
+    private readonly string _id = $"f{Guid.NewGuid():N}";
+
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public System.Linq.Expressions.Expression<Func<string?>>? ValueExpression { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Hint { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int Rows { get; set; } = 4;
+    [Parameter] public int? MaxLength { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

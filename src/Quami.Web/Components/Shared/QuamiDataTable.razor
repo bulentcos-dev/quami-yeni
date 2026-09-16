@@ -1,0 +1,166 @@
+@typeparam TItem
+@inject IStringLocalizer<SharedResource> L
+
+@* Ortak veri tablosu: sıralama, sayfalama ve boş durum mesajı hazır gelir.
+   Modüller tablo işaretlemesi ve stili yazmaz, bunu kullanır. *@
+
+@* Sütunlar burada kaydolur; bu blok görsel çıktı üretmez. *@
+<CascadingValue Value="this" IsFixed="true">@ChildContent</CascadingValue>
+
+<div class="quami-table-wrap">
+    <table class="quami-table">
+        <thead>
+            <tr>
+                @foreach (var column in _columns)
+                {
+                    <th style="@(column.Width is null ? null : $"width:{column.Width}")"
+                        class="quami-align-@column.Align">
+                        @if (column.SortBy is not null)
+                        {
+                            <button type="button" class="quami-th-sort" @onclick="() => SortBy(column)"
+                                    title="@(IsSorted(column) && !_sortDescending ? L["Table.SortDesc"] : L["Table.SortAsc"])">
+                                <span>@column.Title</span>
+                                @if (IsSorted(column))
+                                {
+                                    <QuamiIcon Name="@(_sortDescending ? "chevron-down" : "chevron-up")" Size="14" />
+                                }
+                            </button>
+                        }
+                        else
+                        {
+                            @column.Title
+                        }
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Loading)
+            {
+                <tr><td colspan="@ColumnCount" class="quami-table-state"><QuamiSpinner Inline="true" /></td></tr>
+            }
+            else if (_pageItems.Count == 0)
+            {
+                <tr><td colspan="@ColumnCount" class="quami-table-state quami-muted">@(EmptyText ?? L["Table.Empty"].Value)</td></tr>
+            }
+            else
+            {
+                @foreach (var item in _pageItems)
+                {
+                    <tr>
+                        @foreach (var column in _columns)
+                        {
+                            <td class="quami-align-@column.Align">@column.ChildContent?.Invoke(item)</td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Loading && _totalCount > 0)
+{
+    <div class="quami-table-footer">
+        <span class="quami-muted">@string.Format(L["Table.Total"].Value, _totalCount)</span>
+
+        @if (_pageCount > 1)
+        {
+            <span class="quami-table-pager">
+                <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" Icon="chevron-left"
+                             Disabled="@(_pageIndex == 0)" OnClick="PreviousPage">@L["Table.Previous"]</QuamiButton>
+                <span class="quami-muted">@string.Format(L["Table.Page"].Value, _pageIndex + 1, _pageCount)</span>
+                <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" Icon="chevron-right"
+                             Disabled="@(_pageIndex >= _pageCount - 1)" OnClick="NextPage">@L["Table.Next"]</QuamiButton>
+            </span>
+        }
+    </div>
+}
+
+@code {
+    private readonly List<QuamiColumn<TItem>> _columns = [];
+    private List<TItem> _pageItems = [];
+    private QuamiColumn<TItem>? _sortColumn;
+    private bool _sortDescending;
+    private int _pageIndex;
+    private int _pageCount;
+    private int _totalCount;
+
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Sayfa başına satır. 0 verilirse sayfalama kapanır.</summary>
+    [Parameter] public int PageSize { get; set; } = 20;
+
+    /// <summary>Kayıt yokken gösterilecek metin. Verilmezse ortak metin kullanılır.</summary>
+    [Parameter] public string? EmptyText { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+
+    private int ColumnCount => _columns.Count == 0 ? 1 : _columns.Count;
+
+    /// <summary>Sütun bileşenleri kendilerini buraya kaydeder.</summary>
+    internal void AddColumn(QuamiColumn<TItem> column)
+    {
+        if (_columns.Contains(column)) return;
+        _columns.Add(column);
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet() => Rebuild();
+
+    private bool IsSorted(QuamiColumn<TItem> column) => ReferenceEquals(_sortColumn, column);
+
+    private void SortBy(QuamiColumn<TItem> column)
+    {
+        if (IsSorted(column))
+            _sortDescending = !_sortDescending;
+        else
+        {
+            _sortColumn = column;
+            _sortDescending = false;
+        }
+
+        _pageIndex = 0;
+        Rebuild();
+    }
+
+    private void PreviousPage()
+    {
+        if (_pageIndex == 0) return;
+        _pageIndex--;
+        Rebuild();
+    }
+
+    private void NextPage()
+    {
+        if (_pageIndex >= _pageCount - 1) return;
+        _pageIndex++;
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        var source = Items ?? [];
+
+        if (_sortColumn?.SortBy is { } key)
+            source = _sortDescending ? source.OrderByDescending(key) : source.OrderBy(key);
+
+        var list = source.ToList();
+        _totalCount = list.Count;
+
+        if (PageSize <= 0)
+        {
+            _pageCount = 1;
+            _pageIndex = 0;
+            _pageItems = list;
+            return;
+        }
+
+        _pageCount = Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+        if (_pageIndex > _pageCount - 1) _pageIndex = _pageCount - 1;
+        if (_pageIndex < 0) _pageIndex = 0;
+
+        _pageItems = list.Skip(_pageIndex * PageSize).Take(PageSize).ToList();
+    }
+}

@@ -1,0 +1,27 @@
+@* Uyarı / bilgi kutusu. Dört tür: bilgi, başarı, uyarı, tehlike. *@
+<div class="quami-alert-box quami-alert-box--@Variant.ToString().ToLowerInvariant()" role="@(Variant == AlertVariant.Danger ? "alert" : "status")">
+    <QuamiIcon Name="@IconName" Size="18" Class="quami-alert-icon" />
+    <div class="quami-alert-body">
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <strong>@Title</strong>
+        }
+        <div>@ChildContent</div>
+    </div>
+</div>
+
+@code {
+    public enum AlertVariant { Info, Success, Warning, Danger }
+
+    [Parameter] public AlertVariant Variant { get; set; } = AlertVariant.Info;
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string IconName => Variant switch
+    {
+        AlertVariant.Success => "circle-check",
+        AlertVariant.Warning => "triangle-alert",
+        AlertVariant.Danger => "circle-alert",
+        _ => "info"
+    };
+}

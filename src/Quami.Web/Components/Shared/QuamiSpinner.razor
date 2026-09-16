@@ -1,0 +1,14 @@
+@inject IStringLocalizer<SharedResource> L
+
+@* Yükleniyor göstergesi. Metin verilmezse ortak "Yükleniyor…" metni kullanılır. *@
+<div class="quami-spinner-wrap @(Inline ? "quami-spinner-wrap--inline" : null)" role="status" aria-live="polite">
+    <span class="quami-spinner" aria-hidden="true"></span>
+    <span class="quami-muted">@(Text ?? L["Common.Loading"].Value)</span>
+</div>
+
+@code {
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>true ise satır içinde küçük gösterilir.</summary>
+    [Parameter] public bool Inline { get; set; }
+}

@@ -1,0 +1,31 @@
+@* Sayfa başlığı şablonu: başlık, isteğe bağlı açıklama ve sağda eylem butonları.
+   Her modül sayfası bununla başlar. *@
+<header class="quami-page-header">
+    <div class="quami-page-header-text">
+        <h1>
+            @if (!string.IsNullOrWhiteSpace(Icon))
+            {
+                <QuamiIcon Name="@Icon" Size="22" Class="quami-page-header-icon" />
+            }
+            @Title
+        </h1>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <p class="quami-muted">@Description</p>
+        }
+    </div>
+
+    @if (Actions is not null)
+    {
+        <div class="quami-page-header-actions">@Actions</div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Sağ üstteki eylem butonları.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

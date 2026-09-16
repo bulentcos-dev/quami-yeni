@@ -1,0 +1,16 @@
+@* Lucide ikonu. Simgeler wwwroot/lucide.svg içinde yerel olarak durur;
+   dış bağımlılık yok, çevrimdışı çalışır. Renk currentColor'dan gelir,
+   yani bulunduğu yerin metin rengini alır. *@
+<svg class="quami-icon @Class" width="@Size" height="@Size" aria-hidden="true" focusable="false">
+    <use href="/lucide.svg#@Name" />
+</svg>
+
+@code {
+    /// <summary>Lucide ikon adı, ör. "house", "file-text".</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+
+    /// <summary>Kenar uzunluğu (piksel).</summary>
+    [Parameter] public int Size { get; set; } = 18;
+
+    [Parameter] public string? Class { get; set; }
+}

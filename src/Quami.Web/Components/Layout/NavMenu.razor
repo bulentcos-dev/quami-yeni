@@ -17,7 +17,13 @@
             @* Ana sayfa: açılır başlık değil, doğrudan bağlantı (veriden: IsDirectLink) *@
             <NavLink class="quami-menu-link quami-menu-link--top"
                      href="@group.DirectRoute"
-                     Match="NavLinkMatch.All">@group.Name</NavLink>
+                     Match="NavLinkMatch.All">
+                @if (!string.IsNullOrWhiteSpace(group.Icon))
+                {
+                    <QuamiIcon Name="@group.Icon" Size="17" Class="quami-menu-icon" />
+                }
+                <span>@group.Name</span>
+            </NavLink>
         }
         else
         {
@@ -26,8 +32,14 @@
                     class="quami-menu-group @(isOpen ? "is-open" : null)"
                     aria-expanded="@isOpen"
                     @onclick="() => Toggle(group.Code)">
-                <span>@group.Name</span>
-                <span class="quami-caret" aria-hidden="true">&#9654;</span>
+                <span>
+                    @if (!string.IsNullOrWhiteSpace(group.Icon))
+                    {
+                        <QuamiIcon Name="@group.Icon" Size="17" Class="quami-menu-icon" />
+                    }
+                    <span>@group.Name</span>
+                </span>
+                <QuamiIcon Name="chevron-right" Size="14" Class="quami-caret" />
             </button>
 
             @if (isOpen)
@@ -37,13 +49,23 @@
                     {
                         if (item.IsAvailable)
                         {
-                            <NavLink class="quami-menu-link" href="@item.Route">@item.Name</NavLink>
+                            <NavLink class="quami-menu-link" href="@item.Route">
+                                @if (!string.IsNullOrWhiteSpace(item.Icon))
+                                {
+                                    <QuamiIcon Name="@item.Icon" Size="16" Class="quami-menu-icon" />
+                                }
+                                <span>@item.Name</span>
+                            </NavLink>
                         }
                         else
                         {
                             @* Hazır değil: soluk, bağlantı değil *@
                             <span class="quami-menu-soon" title="@L["Nav.ComingSoon"]">
-                                @item.Name <em>(@L["Nav.ComingSoon"])</em>
+                                @if (!string.IsNullOrWhiteSpace(item.Icon))
+                                {
+                                    <QuamiIcon Name="@item.Icon" Size="16" Class="quami-menu-icon" />
+                                }
+                                <span>@item.Name <em>(@L["Nav.ComingSoon"])</em></span>
                             </span>
                         }
                     }

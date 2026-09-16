@@ -230,3 +230,218 @@ a:hover { color: var(--quami-accent); }
 }
 #blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: .75rem; top: .5rem; }
 #blazor-error-ui a { color: #fff; }
+
+/* ============================================================
+   ORTAK BİLEŞENLER
+   Bütün modüller bu sınıfları kullanır. Modül içine stil yazılmaz.
+   Renkler yalnızca yukarıdaki değişkenlerden gelir.
+   ============================================================ */
+
+/* ---------- İkon ---------- */
+.quami-icon { display: inline-block; vertical-align: -.15em; flex: 0 0 auto; }
+
+/* ---------- Butonlar ---------- */
+.quami-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border-radius: var(--quami-radius);
+    border: 1px solid transparent;
+    padding: .45rem 1rem;
+    font: inherit;
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.quami-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.quami-btn--primary { background: var(--quami-accent); color: var(--quami-on-accent); }
+.quami-btn--primary:hover:not(:disabled) { background: var(--quami-accent-dark); }
+
+.quami-btn--secondary { background: var(--quami-surface); color: var(--quami-primary); border-color: var(--quami-border); }
+.quami-btn--secondary:hover:not(:disabled) { border-color: var(--quami-primary); background: var(--quami-surface-alt); }
+
+.quami-btn--danger { background: var(--quami-danger); color: #fff; }
+.quami-btn--danger:hover:not(:disabled) { filter: brightness(.9); }
+
+.quami-btn-spinner,
+.quami-spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: quami-spin .7s linear infinite;
+}
+@keyframes quami-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Yükleniyor ---------- */
+.quami-spinner-wrap { display: flex; align-items: center; gap: .5rem; padding: 1.25rem; justify-content: center; }
+.quami-spinner-wrap--inline { padding: .4rem; }
+.quami-spinner-wrap .quami-spinner { color: var(--quami-accent); }
+
+/* ---------- Sayfa başlığı ---------- */
+.quami-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+.quami-page-header h1 { display: flex; align-items: center; gap: .5rem; margin: 0; }
+.quami-page-header-icon { color: var(--quami-accent); }
+.quami-page-header-text p { margin: .3rem 0 0; }
+.quami-page-header-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* ---------- Uyarı / bilgi kutusu ---------- */
+.quami-alert-box {
+    display: flex;
+    gap: .6rem;
+    align-items: flex-start;
+    border: 1px solid var(--quami-border);
+    border-left-width: 4px;
+    border-radius: var(--quami-radius);
+    padding: .75rem .9rem;
+    margin-bottom: 1rem;
+    background: var(--quami-surface);
+}
+.quami-alert-box strong { display: block; margin-bottom: .15rem; }
+.quami-alert-icon { margin-top: .15rem; }
+.quami-alert-box--info { border-left-color: var(--quami-primary); }
+.quami-alert-box--info .quami-alert-icon { color: var(--quami-primary); }
+.quami-alert-box--success { border-left-color: #1f7a45; }
+.quami-alert-box--success .quami-alert-icon { color: #1f7a45; }
+.quami-alert-box--warning { border-left-color: var(--quami-accent); }
+.quami-alert-box--warning .quami-alert-icon { color: var(--quami-accent); }
+.quami-alert-box--danger { border-left-color: var(--quami-danger); }
+.quami-alert-box--danger .quami-alert-icon { color: var(--quami-danger); }
+
+/* ---------- Form alanları ---------- */
+.quami-input {
+    width: 100%;
+    padding: .45rem .6rem;
+    border: 1px solid var(--quami-border);
+    border-radius: var(--quami-radius);
+    font: inherit;
+    color: var(--quami-text);
+    background: var(--quami-surface);
+}
+.quami-input:focus { outline: 2px solid var(--quami-accent); outline-offset: 1px; }
+.quami-input:disabled { background: var(--quami-surface-alt); color: var(--quami-text-muted); }
+.quami-textarea { resize: vertical; }
+.quami-select { appearance: auto; }
+.quami-required { color: var(--quami-danger); margin-inline-start: .15rem; }
+.quami-hint { font-size: .8rem; color: var(--quami-text-muted); margin-top: .2rem; }
+.quami-field--check label { margin-bottom: 0; }
+.quami-check { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; color: var(--quami-text); }
+
+/* ---------- Tablo ---------- */
+.quami-table-wrap {
+    overflow-x: auto;
+    background: var(--quami-surface);
+    border: 1px solid var(--quami-border);
+    border-radius: var(--quami-radius);
+}
+.quami-table { width: 100%; border-collapse: collapse; }
+.quami-table th,
+.quami-table td { padding: .55rem .75rem; border-bottom: 1px solid var(--quami-border); text-align: start; }
+.quami-table thead th {
+    background: var(--quami-surface-alt);
+    color: var(--quami-text-muted);
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    white-space: nowrap;
+}
+.quami-table tbody tr:last-child td { border-bottom: 0; }
+.quami-table tbody tr:hover { background: var(--quami-surface-alt); }
+.quami-th-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+}
+.quami-th-sort:hover { color: var(--quami-accent); }
+.quami-table-state { text-align: center; padding: 1.5rem; }
+.quami-align-start { text-align: start; }
+.quami-align-center { text-align: center; }
+.quami-align-end { text-align: end; }
+.quami-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: .6rem .2rem 0;
+    font-size: .88rem;
+}
+.quami-table-pager { display: inline-flex; align-items: center; gap: .6rem; }
+
+/* ---------- Pencere (modal) ---------- */
+.quami-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 35, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 900;
+}
+.quami-modal {
+    background: var(--quami-surface);
+    border-radius: var(--quami-radius);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .3);
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    outline: none;
+}
+.quami-modal--small { max-width: 420px; }
+.quami-modal--medium { max-width: 680px; }
+.quami-modal--large { max-width: 960px; }
+.quami-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1.1rem;
+    border-bottom: 1px solid var(--quami-border);
+}
+.quami-modal-header h2 { margin: 0; font-size: 1.05rem; }
+.quami-modal-close {
+    background: none;
+    border: 0;
+    color: var(--quami-text-muted);
+    cursor: pointer;
+    padding: .2rem;
+    display: inline-flex;
+}
+.quami-modal-close:hover { color: var(--quami-danger); }
+.quami-modal-body { padding: 1.1rem; overflow-y: auto; }
+.quami-modal-body p:first-child { margin-top: 0; }
+.quami-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    padding: .8rem 1.1rem;
+    border-top: 1px solid var(--quami-border);
+    background: var(--quami-surface-alt);
+    border-radius: 0 0 var(--quami-radius) var(--quami-radius);
+}
+
+/* ---------- Menü ikonları ---------- */
+.quami-menu-group > span:first-child,
+.quami-menu-link { display: flex; align-items: center; gap: .55rem; }
+.quami-menu-soon { display: flex; align-items: center; gap: .55rem; }
+.quami-menu-icon { opacity: .85; }

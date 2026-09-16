@@ -1,0 +1,36 @@
+@* Form alanlarının ortak çerçevesi: etiket, alanın kendisi, doğrulama mesajı
+   ve ipucu. Alan bileşenleri bunu kullanır; modül içinde form stili yazılmaz. *@
+<div class="quami-field @Class">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@For">
+            @Label
+            @if (Required)
+            {
+                <span class="quami-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+
+    @ChildContent
+
+    @if (Validation is not null)
+    {
+        @Validation
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Hint))
+    {
+        <div class="quami-hint">@Hint</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? For { get; set; }
+    [Parameter] public string? Hint { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Validation { get; set; }
+}

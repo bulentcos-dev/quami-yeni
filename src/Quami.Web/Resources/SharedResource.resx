@@ -154,4 +154,46 @@
   <data name="Error.Title" xml:space="preserve">
     <value>Bir hata oluştu</value>
   </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Vazgeç</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Kapat</value>
+  </data>
+  <data name="Common.Confirm" xml:space="preserve">
+    <value>Onayla</value>
+  </data>
+  <data name="Common.Loading" xml:space="preserve">
+    <value>Yükleniyor…</value>
+  </data>
+  <data name="Common.No" xml:space="preserve">
+    <value>Hayır</value>
+  </data>
+  <data name="Common.Select" xml:space="preserve">
+    <value>Seçiniz</value>
+  </data>
+  <data name="Common.Yes" xml:space="preserve">
+    <value>Evet</value>
+  </data>
+  <data name="Table.Empty" xml:space="preserve">
+    <value>Gösterilecek kayıt yok.</value>
+  </data>
+  <data name="Table.Next" xml:space="preserve">
+    <value>Sonraki</value>
+  </data>
+  <data name="Table.Page" xml:space="preserve">
+    <value>Sayfa {0} / {1}</value>
+  </data>
+  <data name="Table.Previous" xml:space="preserve">
+    <value>Önceki</value>
+  </data>
+  <data name="Table.SortAsc" xml:space="preserve">
+    <value>Artan sırala</value>
+  </data>
+  <data name="Table.SortDesc" xml:space="preserve">
+    <value>Azalan sırala</value>
+  </data>
+  <data name="Table.Total" xml:space="preserve">
+    <value>Toplam {0} kayıt</value>
+  </data>
 </root>

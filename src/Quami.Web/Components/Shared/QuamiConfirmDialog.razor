@@ -1,0 +1,49 @@
+@inject IStringLocalizer<SharedResource> L
+
+@* Onay penceresi. Silme gibi geri alınamaz işlemler için.
+   Onay butonu varsayılan olarak "tehlikeli" türündedir. *@
+<QuamiModal @bind-Visible="Visible" Title="@Title" Size="QuamiModal.ModalSize.Small" CloseOnBackdrop="!Busy">
+    <ChildContent>
+        <p>@Message</p>
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+    </ChildContent>
+    <Footer>
+        <QuamiButton Variant="QuamiButton.ButtonVariant.Secondary" Disabled="Busy" OnClick="CancelAsync">
+            @(CancelText ?? L["Common.Cancel"].Value)
+        </QuamiButton>
+        <QuamiButton Variant="ConfirmVariant" Busy="Busy" OnClick="ConfirmAsync">
+            @(ConfirmText ?? L["Common.Confirm"].Value)
+        </QuamiButton>
+    </Footer>
+</QuamiModal>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string? ConfirmText { get; set; }
+    [Parameter] public string? CancelText { get; set; }
+    [Parameter] public QuamiButton.ButtonVariant ConfirmVariant { get; set; } = QuamiButton.ButtonVariant.Danger;
+
+    /// <summary>Onay işlemi sürerken butonlar kilitlenir.</summary>
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task ConfirmAsync() => await OnConfirm.InvokeAsync();
+
+    private async Task CancelAsync()
+    {
+        if (VisibleChanged.HasDelegate)
+            await VisibleChanged.InvokeAsync(false);
+        await OnCancel.InvokeAsync();
+    }
+}

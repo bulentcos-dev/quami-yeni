@@ -154,4 +154,46 @@
   <data name="Error.Title" xml:space="preserve">
     <value>An error occurred</value>
   </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common.Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="Common.Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="Common.No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Common.Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="Common.Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Table.Empty" xml:space="preserve">
+    <value>There are no records to show.</value>
+  </data>
+  <data name="Table.Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="Table.Page" xml:space="preserve">
+    <value>Page {0} of {1}</value>
+  </data>
+  <data name="Table.Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="Table.SortAsc" xml:space="preserve">
+    <value>Sort ascending</value>
+  </data>
+  <data name="Table.SortDesc" xml:space="preserve">
+    <value>Sort descending</value>
+  </data>
+  <data name="Table.Total" xml:space="preserve">
+    <value>{0} records in total</value>
+  </data>
 </root>

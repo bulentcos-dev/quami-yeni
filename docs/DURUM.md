@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
 Son güncelleme: 17 Eylül 2026
-Son commit: adım 6: kimlik, oturum, kiracı bağlamı ve kimlik olay günlüğü (bkz. `git log`)
+Son commit: adım 7: blazor yerleşimi, akordeon menü, tema (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -23,7 +23,8 @@ yerden devam eder. Her adım bitince güncellenir.
 | 4 | İlk migration ve veritabanı oluşturma | BİTTİ |
 | 5 | Seed verisi: örnek kiracı, menü grupları, modül kayıtları | BİTTİ |
 | 6 | Kimlik ve oturum, ITenantContext, kimlik olay günlüğü | BİTTİ |
-| 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | BİTTİ (commit bekliyor) |
+| 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | BİTTİ |
+| 7b | İkonlar (Lucide) ve ortak bileşen kümesi | BİTTİ (commit bekliyor) |
 | 8 | Boş dashboard sayfası | SIRADA |
 | 9 | IFileStorage + Quami.Api iskeleti | bekliyor |
 | 10 | İlk commit | bekliyor (adım 1 ayrıca commit edildi) |
@@ -417,6 +418,66 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
   Sınama sonrası lisans geri açıldı.
 - `/environment` elle yazılınca "Bu modül henüz hazır değil" panosu geldi.
 - Oturum boyunca sunucu günlüğünde hata yok.
+
+## Adım 7b: ikonlar ve ortak bileşen kümesi
+
+### İkonlar — Lucide
+- `wwwroot/lucide.svg`: 39 Lucide ikonu tek bir SVG sprite dosyasında, YEREL.
+  Dış bağımlılık yok, çevrimdışı çalışır. Lucide ISC lisanslı; dosyanın başında
+  kaynak notu var.
+- Kullanım: `<QuamiIcon Name="house" Size="18" />`. Renk `currentColor`dan gelir,
+  yani bulunduğu yerin metin rengini alır.
+- Veri alanındaki ikon adları Lucide adlarına çevrildi (seed'de güncellendi,
+  açılışta veritabanına yansıdı — adım 5 kuralı çalıştı).
+  Örnek: `check2-square` → `square-check-big`, `bar-chart` → `chart-column`,
+  `tree` → `leaf`, `gear` → `settings`.
+- Menüde grup başlıkları, modül satırları ve "yakında" satırları ikonlu; akordeon
+  oku da Lucide `chevron-right` (açılınca döner).
+
+### Ortak bileşenler — `Components/Shared/`
+Hepsi tema değişkenlerini kullanır. **Modül içine stil yazılmaz, bunlar kullanılır.**
+
+| Bileşen | Ne yapar |
+|---|---|
+| `QuamiIcon` | Lucide ikonu |
+| `QuamiButton` | Birincil / ikincil / tehlikeli; ikon, kapalı ve "işlem sürüyor" durumu |
+| `QuamiPageHeader` | Sayfa başlığı + açıklama + sağda eylem butonları |
+| `QuamiAlert` | Bilgi / başarı / uyarı / tehlike kutusu |
+| `QuamiSpinner` | Yükleniyor göstergesi (satır içi veya blok) |
+| `QuamiModal` | Genel pencere; Esc, çarpı, arka plan tıklamasıyla kapanır |
+| `QuamiConfirmDialog` | Onay penceresi; onay butonu varsayılan olarak tehlikeli |
+| `QuamiDataTable` + `QuamiColumn` | Sıralama, sayfalama, boş durum, yükleniyor durumu |
+| `QuamiTextField` | Metin |
+| `QuamiTextAreaField` | Çok satırlı metin |
+| `QuamiNumberField` | Sayı (int/long/decimal/double ve nullable) |
+| `QuamiDateField` | Tarih (DateTime/DateOnly, tarih+saat seçeneği) |
+| `QuamiSelectField` | Açılır liste (`QuamiOption<T>`) |
+| `QuamiCheckboxField` | Onay kutusu |
+| `QuamiFieldShell` | Alanların ortak çerçevesi: etiket, zorunlu işareti, doğrulama, ipucu |
+
+- Form alanları `@bind-Value` ile çalışır ve `EditForm` içinde doğrulama
+  mesajını kendileri gösterir. `EditForm` dışında da kullanılabilirler
+  (doğrulama bloğu o zaman çizilmez).
+- Tablo sütunları `QuamiColumn` ile bildirilir; sütun kendini tabloya kaydeder,
+  tablo çizer. `SortBy` verilen sütunun başlığı tıklanabilir olur.
+- Yeni ortak metinler kaynak dosyalarına eklendi (boş tablo, sayfalama, onayla,
+  vazgeç, kapat, seçiniz, yükleniyor...). Bileşenlerde gömülü metin yok.
+
+### Örnek sayfa
+- `/dev/components` → `Components/Pages/ComponentGallery.razor`.
+  **Geliştirici sayfası:** menüde yok, bir modüle ait değil, oturum ister.
+  Bütün bileşenlerin canlı örneği; modül yazarken buraya bakılır.
+
+### Adım 7b doğrulaması (tarayıcıda)
+- Menü ikonları çizildi (ev, liste, klasör, pano, kalkan, ayar).
+- Dört uyarı türü, beş buton durumu, sayfa başlığı ve eylem butonları göründü.
+- Tablo: sıralama (KOD'a iki tık → azalan, ok göstergesi), sayfalama
+  (Sayfa 1/2 → 2/2, uçlarda butonlar kapanıyor), boş durum
+  ("Gösterilecek kayıt yok."), yükleniyor durumu.
+- Onay penceresi açıldı, "Sil" onayı çalıştı, pencere kapandı.
+- Form doğrulaması: boş zorunlu alanla kaydetmeye çalışınca alanın altında
+  kırmızı mesaj çıktı, form gönderilmedi.
+- Sunucu günlüğünde hata yok.
 
 ## Açık kararlar (Bülent'e ait)
 
