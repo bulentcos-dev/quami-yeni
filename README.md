@@ -42,6 +42,10 @@ Bağımlılık yönü: `Web`/`Api` → `Infrastructure` → `Application` → `D
   kilitlenmesi ve parola değişikliği ayrı bir `auth_events` tablosuna yazılır.
   Salt ekleme. Parola veya parola özeti asla yazılmaz.
 - **Tema:** renkler tek yerde CSS değişkeni olarak; lacivert `#1E3556`, turuncu `#E8772E`.
+- **Dosya deposu:** `IFileStorage` arkasında. Bugün diskte (`FileStorage:RootPath`),
+  her kiracı kendi klasöründe; diskteki ad üretilir, gerçek ad veritabanında durur.
+- **API:** `Quami.Api` ayakta, `/health` açık, diğer uçlar `X-Api-Key` ister
+  (`Api:Keys` ayarı). İçi bu fazda boş.
 - **Bu fazda yapay zeka yok.** Faz 2'de ayrı Python servisi `Quami.Api` üzerinden bağlanır.
 
 ## Yerel geliştirme

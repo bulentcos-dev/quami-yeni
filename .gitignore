@@ -480,3 +480,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Yerel dosya deposu (IFileStorage): kullanıcı dosyaları depoya girmez
+App_Data/

@@ -3,6 +3,7 @@ using Quami.Web.Components;
 using Microsoft.AspNetCore.Localization;
 using Quami.Infrastructure;
 using Quami.Infrastructure.Persistence.Seed;
+using Quami.Web.Files;
 using Quami.Web.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +55,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapCultureEndpoint();
+app.MapFileEndpoints();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

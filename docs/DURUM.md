@@ -1,7 +1,7 @@
 # Yeni Quami — Yapım Durumu
 
 Son güncelleme: 17 Eylül 2026
-Son commit: ortak bileşenler ve lucide ikonları (bkz. `git log`)
+Son commit: adım 8: boş gösterge paneli (bkz. `git log`)
 
 Bu dosya oturumlar arası devir içindir. Yeni oturum önce bunu okur, kaldığı
 yerden devam eder. Her adım bitince güncellenir.
@@ -25,9 +25,9 @@ yerden devam eder. Her adım bitince güncellenir.
 | 6 | Kimlik ve oturum, ITenantContext, kimlik olay günlüğü | BİTTİ |
 | 7 | Blazor yerleşimi: akordeon menü (veriden), dil değiştirici, tema | BİTTİ |
 | 7b | İkonlar (Lucide) ve ortak bileşen kümesi | BİTTİ |
-| 8 | Boş dashboard sayfası | BİTTİ (commit bekliyor) |
-| 9 | IFileStorage + Quami.Api iskeleti | SIRADA |
-| 10 | İlk commit | bekliyor (adım 1 ayrıca commit edildi) |
+| 8 | Boş dashboard sayfası | BİTTİ |
+| 9 | IFileStorage + Quami.Api iskeleti | BİTTİ (commit bekliyor) |
+| 10 | İlk commit | KONUSUZ — her adım ayrı commit edildi |
 
 Çalışma kuralı: tek adım, tek komut; adım bitince Bülent'e rapor, onay, sonraki adım.
 Şartnamenin tamamı bu oturumun iskelet prompt'unda; özeti README.md'de.
@@ -514,6 +514,55 @@ yazılmadı; her şey ortak bileşenler ve ortak yerleşim sınıflarıyla kurul
 - Şerit geçici olarak açılıp kapatıldı: açıkken sayfa aşağı kaydı, yerleşim
   bozulmadı. Sonra gizli haline döndürüldü.
 - Sunucu günlüğünde hata yok.
+
+## Adım 9'da üretilenler ve kararlar
+
+### Dosya deposu
+- `Application/Abstractions/IFileStorage.cs`: `SaveAsync`, `GetAsync`,
+  `DeleteAsync`, `GetUrl`. Uygulaması `Infrastructure/Storage/LocalFileStorage.cs`.
+- **Arayüzde kiracı parametresi YOK.** Kiracı `ITenantContext`ten okunur, böylece
+  bir modül yanlışlıkla başka kiracının dosyasına erişemez. Kontrol sunucuda.
+- Yerleşim: `<kök>/<kiracı kimliği>/<üretilen ad>`. Kök `FileStorage:RootPath`
+  ayarından gelir (varsayılan `App_Data/files`, göreli verilirse içerik köküne
+  göre çözülür). Koda gömülü yol yok. `App_Data/` .gitignore'da.
+- **Diskteki ad üretilir** (Guid v7 + güvenli uzantı). Kullanıcının verdiği ad
+  `StoredFile.FileName` ile geri döner ve ÇAĞIRAN MODÜL tarafından veritabanında
+  saklanır. Türkçe karakter, boşluk ve aynı adlı dosya sorunu böylece bitiyor.
+- İki koruma: depo adı biçim kontrolü (32 onaltılık + uzantı) ve çözülen tam
+  yolun kiracı klasörünün içinde kaldığının doğrulanması (dizin aşımı).
+- `GetUrl` uygulamanın indirme adresini verir: `Web/Files/FileEndpoints.cs`
+  içindeki `/files/{key}` ucu, oturum ister ve dosyayı depodan okur.
+  **Not:** gerçek dosya adı ve içerik türü henüz bir tabloda tutulmadığı için
+  uç şimdilik genel tür döndürür; Dokümanlar modülü kendi tablosundan doğru adla
+  indirecek.
+- **S3'e geçiş** yalnızca `IFileStorage`ın ikinci bir uygulamasıdır; çağıran kod
+  ve uçlar değişmez. `GetUrl` o zaman imzalı adres döndürecek.
+
+### Quami.Api
+- İçi bu fazda BOŞ. Python yapay zekâ servisi ve Jira sonraki fazda buraya bağlanacak.
+- `/health`: anahtar istemez (izleme araçları için), veritabanına erişimi de
+  kontrol eder; erişilemiyorsa 503 döner.
+- `/api/ping`: anahtar ister, çağıran istemcinin adını döndürür. Bağlanan tarafın
+  anahtarını sınaması için; iş mantığı yok.
+- API anahtarı: `Api:Keys` ayarında "istemci adı → anahtar". `X-Api-Key` başlığı.
+  Karşılaştırma sabit süreli. **Varsayılan anahtar bilerek yok:** anahtar tanımlı
+  değilse korumalı uçlar 401 döner, kimse farkında olmadan açık API ile çalışmaz.
+  Geliştirme anahtarı yalnızca `appsettings.Development.json` içinde ve
+  değiştirilmesi gerektiğini adından söylüyor. Canlıda ortam değişkeniyle verilecek.
+- Şablondan gelen örnek hava durumu ucu ve `.http` dosyası silindi.
+- Api'de oturum yok; kiracı bağlamı boş uygulamadır. Kiracıya göre çalışan uçlar
+  eklendiğinde kiracı, API anahtarına bağlanacak.
+
+### Adım 9 doğrulaması (curl ile)
+- API: `/health` 200 ve `database: up`. `/api/ping` anahtarsız 401, yanlış
+  anahtarla 401, doğru anahtarla 200 ve `client: python-ai`.
+- Dosya: "Örnek Doküman (son sürüm).PDF" kaydedildi; diske
+  `.../30000000000000000000000000000001/01a0…6209.pdf` olarak yazıldı — yani
+  kiracı klasöründe ve üretilmiş adla. Gerçek ad yanıtta döndü.
+- İndirme oturumla 200 ve içerik doğru; oturumsuz giriş ekranına yönlendi.
+- Başka kiracının klasörüne elle konan dosya, geçerli depo adıyla istendi: 404.
+- Dizin aşımı denemesi (`..%2F..%2Fappsettings.json`): 400.
+- Sınama dosyaları ve geçici uç silindi. Sunucu günlüklerinde hata yok.
 
 ## Açık kararlar (Bülent'e ait)
 

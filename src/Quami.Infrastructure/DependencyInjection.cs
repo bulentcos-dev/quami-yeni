@@ -8,6 +8,7 @@ using Quami.Application.Menu;
 using Quami.Infrastructure.Identity;
 using Quami.Infrastructure.Persistence;
 using Quami.Infrastructure.Services;
+using Quami.Infrastructure.Storage;
 
 namespace Quami.Infrastructure;
 
@@ -44,6 +45,9 @@ public static class DependencyInjection
         services.TryAddScoped<ITenantContext, NullTenantContext>();
 
         services.TryAddSingleton(TimeProvider.System);
+        services.Configure<FileStorageOptions>(configuration.GetSection(FileStorageOptions.SectionName));
+        services.AddScoped<IFileStorage, LocalFileStorage>();
+
         services.AddScoped<IModuleLicenseService, ModuleLicenseService>();
         services.AddScoped<IMenuService, MenuService>();
 
