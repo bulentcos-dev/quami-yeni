@@ -79,7 +79,16 @@ public static class DatabaseSeeder
             logger.LogInformation("Boş veritabanı: örnek kiracı oluşturuldu.");
 
         if (!string.IsNullOrEmpty(sampleUserPassword))
+        {
             await EnsureSampleIdentityUserAsync(scope.ServiceProvider, db, sampleUserPassword, logger, cancellationToken);
+        }
+        else
+        {
+            logger.LogInformation(
+                "Örnek kullanıcı için parola verilmedi, giriş kaydı açılmadı. " +
+                "Geliştirmede açmak için Seed:SampleUserPassword ayarını verin " +
+                "(bkz. README, Ayarlar bölümü).");
+        }
 
         await transaction.CommitAsync(cancellationToken);
     }

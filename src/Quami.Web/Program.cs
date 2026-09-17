@@ -64,9 +64,11 @@ app.MapRazorComponents<App>()
 // Açılışta seed: sistem geneli menü/modül kayıtları koda göre güncellenir,
 // boş veritabanında örnek kiracı oluşturulur. Migration'lar yalnızca
 // geliştirmede uygulanır; test/canlıda dağıtım adımı uygular.
-// Örnek kullanıcının parolası YALNIZCA geliştirmede açılır.
+// Örnek kullanıcının parolası YALNIZCA geliştirmede ve YALNIZCA ayarlarda
+// verilmişse açılır. Koda gömülü varsayılan parola YOKTUR: ayar yoksa hesap
+// parolasız kalır ve açılışta nasıl verileceği günlüğe yazılır.
 var sampleUserPassword = app.Environment.IsDevelopment()
-    ? builder.Configuration["Seed:SampleUserPassword"] ?? "<GELISTIRME-PAROLASI-KALDIRILDI>"
+    ? builder.Configuration["Seed:SampleUserPassword"]
     : null;
 
 await DatabaseSeeder.MigrateAndSeedAsync(

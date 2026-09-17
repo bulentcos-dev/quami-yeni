@@ -1,0 +1,18 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "QuamiDb": "Host=localhost;Port=5432;Database=quami_dev;Username=KULLANICI_ADINIZ"
+  },
+  "FileStorage": {
+    "RootPath": "App_Data/files",
+    "DownloadPathPrefix": "/files"
+  },
+  "Seed": {
+    "SampleUserPassword": ""
+  }
+}

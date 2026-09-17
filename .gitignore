@@ -483,3 +483,8 @@ $RECYCLE.BIN/
 
 # Yerel dosya deposu (IFileStorage): kullanıcı dosyaları depoya girmez
 App_Data/
+
+# Geliştirme ayarları: makineye özel bağlantı dizesi, parola ve API anahtarı taşır.
+# Şablonları .example uzantılı dosyalardadır; kopyalayıp kendinize göre doldurun.
+appsettings.Development.json
+appsettings.*.Development.json

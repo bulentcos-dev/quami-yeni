@@ -56,21 +56,22 @@ dotnet --version     # 10.x
 psql -d postgres -c "select version();"
 ```
 
-### 2. Veritabanı bağlantısı
+### 2. Ayarları verin
 
-Bağlantı dizesi `src/Quami.Web/appsettings.Development.json` ve
-`src/Quami.Api/appsettings.Development.json` dosyalarındadır.
+Depoda gerçek ayar dosyası yoktur; `appsettings.Development.json` dosyaları
+bilerek depo dışındadır (bağlantı dizesi, parola ve API anahtarı taşırlar).
+Her projenin yanında `.example` uzantılı bir şablon vardır.
 
-```json
-"ConnectionStrings": {
-  "QuamiDb": "Host=localhost;Port=5432;Database=quami_dev;Username=<kullanici>"
-}
+```bash
+cp src/Quami.Web/appsettings.Development.json.example src/Quami.Web/appsettings.Development.json
+cp src/Quami.Api/appsettings.Development.json.example src/Quami.Api/appsettings.Development.json
 ```
 
-> **Yeni bir makinede `Username` değerini kendi PostgreSQL kullanıcınıza göre
-> düzeltin.** Homebrew kurulumunda bu genellikle makinedeki kullanıcı adınızdır.
-> `dotnet ef` komutları için `QUAMI_DB` ortam değişkeni de kullanılabilir;
-> verilmezse koddaki yerel varsayılan geçerlidir.
+Kopyaladığınız dosyalarda `KULLANICI_ADINIZ` yerine PostgreSQL kullanıcı adınızı
+yazın (Homebrew kurulumunda bu genellikle makinedeki oturum adınızdır).
+
+Parola ve API anahtarı gibi değerleri dosyaya yazmak yerine kullanıcı gizli
+deposuna koymanız önerilir. Ayrıntılar aşağıdaki **Ayarlar** bölümünde.
 
 ### 3. Veritabanını oluşturun
 
@@ -93,14 +94,98 @@ kendiliğinden oluşturur.
 
 ### 5. Geliştirme hesabı
 
+Boş bir veritabanında `DEMO` adlı örnek kurum ve `admin` adlı kullanıcı
+oluşturulur. Bu kullanıcının **parolası ayarlardan gelir; kodda varsayılan
+parola yoktur.** Ayar verilmezse giriş kaydı açılmaz ve açılış günlüğünde bu
+durum bildirilir.
+
+Geliştirme parolasını kullanıcı gizli deposuna koyun:
+
+```bash
+dotnet user-secrets --project src/Quami.Web set "Seed:SampleUserPassword" "<güçlü bir geliştirme parolası>"
+```
+
+Parola kuralı: en az 10 karakter, büyük ve küçük harf, rakam, özel karakter.
+
+Sonra giriş ekranında:
+
 | Alan | Değer |
 |---|---|
 | Kurum kodu | `DEMO` |
 | Kullanıcı adı | `admin` |
-| Parola | `<GELISTIRME-PAROLASI-KALDIRILDI>` |
+| Parola | ayarda verdiğiniz değer |
 
 Bu hesap **yalnızca Development ortamında** açılır; test ve canlı ortamda
-oluşturulmaz. Parolayı değiştirmek için `Seed:SampleUserPassword` ayarını verin.
+oluşturulmaz.
+
+---
+
+## Ayarlar
+
+Uygulama ayarları üç kaynaktan okunur. Sonraki kaynak öncekini ezer:
+
+1. `appsettings.json` — depoda, gizli hiçbir değer içermez.
+2. `appsettings.Development.json` — **depoda değildir**, makineye özeldir.
+3. Kullanıcı gizli deposu (user secrets) ve ortam değişkenleri.
+
+Canlı ve test ortamlarında ayarlar ortam değişkenleriyle verilir; dosyaya
+yazılmaz.
+
+### Hangi ayar ne işe yarar
+
+| Ayar | Ne işe yarar | Ortam değişkeni karşılığı |
+|---|---|---|
+| `ConnectionStrings:QuamiDb` | PostgreSQL bağlantısı | `ConnectionStrings__QuamiDb` |
+| `Seed:SampleUserPassword` | Örnek `admin` kullanıcısının parolası. Yalnızca Development'ta kullanılır; boşsa hesap parolasız kalır. | `Seed__SampleUserPassword` |
+| `Api:Keys:<istemci adı>` | `Quami.Api` uçlarının beklediği API anahtarı. Tanımlı değilse korumalı uçlar 401 döner. | `Api__Keys__<istemci adı>` |
+| `FileStorage:RootPath` | Kullanıcı dosyalarının kök klasörü. Göreli verilirse uygulamanın içerik köküne göre çözülür. | `FileStorage__RootPath` |
+| `FileStorage:DownloadPathPrefix` | İndirme adreslerinin yol öneki. | `FileStorage__DownloadPathPrefix` |
+
+İç içe ayarlar ortam değişkeninde **iki alt çizgi** ile ayrılır (`:` yerine `__`).
+
+### Kullanıcı gizli deposu (önerilen yol)
+
+Gizli depo, değerleri projenin dışında, kullanıcı profilinizde tutar; depoya
+sızma ihtimali yoktur. Yalnızca Development ortamında okunur.
+
+```bash
+# Veritabanı bağlantısı
+dotnet user-secrets --project src/Quami.Web set "ConnectionStrings:QuamiDb" \
+  "Host=localhost;Port=5432;Database=quami_dev;Username=<kullanıcı adınız>"
+
+# Örnek kullanıcının parolası
+dotnet user-secrets --project src/Quami.Web set "Seed:SampleUserPassword" "<parola>"
+
+# API anahtarı (Quami.Api projesi için)
+dotnet user-secrets --project src/Quami.Api set "ConnectionStrings:QuamiDb" \
+  "Host=localhost;Port=5432;Database=quami_dev;Username=<kullanıcı adınız>"
+dotnet user-secrets --project src/Quami.Api set "Api:Keys:python-ai" "<anahtar>"
+
+# Ne tanımlı, görmek için
+dotnet user-secrets --project src/Quami.Web list
+```
+
+### `dotnet ef` komutları için
+
+Migration komutları web sunucusunu ayağa kaldırmaz, bu yüzden gizli depoyu
+okumazlar. Bağlantıyı `QUAMI_DB` ortam değişkeninden alırlar:
+
+```bash
+export QUAMI_DB="Host=localhost;Port=5432;Database=quami_dev;Username=<kullanıcı adınız>"
+dotnet ef database update --project src/Quami.Infrastructure
+```
+
+Değişken verilmezse yerel geliştirme varsayılanı kurulur: `localhost`,
+`quami_dev` ve veritabanı kullanıcısı olarak makinedeki oturum adınız. Homebrew
+ile kurulan PostgreSQL'de bu genellikle doğrudan çalışır.
+
+### Gizli değerleri asla depoya yazmayın
+
+- `appsettings.Development.json` dosyaları `.gitignore` içindedir; oradan
+  çıkarmayın.
+- Parola, API anahtarı veya bağlantı dizesini `appsettings.json`, kod veya
+  belge dosyalarına yazmayın.
+- Kodda hiçbir varsayılan parola veya anahtar yoktur; bu bilinçli bir karardır.
 
 ---
 
@@ -183,7 +268,8 @@ Bağımlılık yönü: `Web` ve `Api` → `Infrastructure` → `Application` →
   klasörlerde durur, diskteki ad üretilir, gerçek ad veritabanında tutulur.
   Amazon S3'e geçiş tek bir uygulama değişikliğidir.
 - **API anahtarı:** `Quami.Api` uçları `X-Api-Key` başlığı ister, anahtarlar
-  `Api:Keys` ayarından gelir. Varsayılan anahtar yoktur.
+  `Api:Keys` ayarından gelir. Varsayılan anahtar yoktur; tanımlı değilse
+  korumalı uçlar 401 döner.
 
 ---
 

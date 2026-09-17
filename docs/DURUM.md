@@ -145,7 +145,7 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
   Migration üretimi ve ileride arka plan işleri için. İstek hattında kullanılmaz.
 - `Persistence/QuamiDbContextFactory.cs`: IDesignTimeDbContextFactory. Bağlantı
   `QUAMI_DB` ortam değişkeninden, yoksa yerel varsayılan
-  `Host=localhost;Port=5432;Database=quami_dev;Username=<kullanici>` (trust).
+  `<yerel geliştirme bağlantısı>` (trust).
 - Migration: `Persistence/Migrations/20260915130601_InitialCreate`. Veritabanı
   `quami_dev` `dotnet ef database update` ile oluştu. Tablolar: tenants,
   menu_groups, modules, tenant_modules, users, audit_logs, __EFMigrationsHistory.
@@ -275,8 +275,7 @@ otomatik gizleyecek. ISO denetimlerinde kayıt fiziksel silinmemeli.
 
 ### Geliştirme hesabı
 - Boş veritabanında `DEMO` kurumu, `admin` kullanıcısı ve **yalnızca
-  Development'ta** bir parola oluşur (`<GELISTIRME-PAROLASI-KALDIRILDI>`, ayar:
-  `Seed:SampleUserPassword`). Test/canlıda parola verilmez, hesap açılmaz.
+  Development'ta** bir parola oluşur (ayar: `Seed:SampleUserPassword`; kodda varsayılan parola yok). Test/canlıda parola verilmez, hesap açılmaz.
   Açılışta uyarı günlüğü basılır. Bkz. README.
 - Parola kuralı: en az 10 karakter, büyük/küçük harf, rakam, özel karakter.
   Kilit: 5 hatalı denemede 15 dakika.

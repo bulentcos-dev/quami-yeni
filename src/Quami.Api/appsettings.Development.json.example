@@ -5,7 +5,9 @@
       "Microsoft.AspNetCore": "Warning"
     }
   },
-  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "QuamiDb": "Host=localhost;Port=5432;Database=quami_dev;Username=KULLANICI_ADINIZ"
+  },
   "Api": {
     "Keys": {}
   }
