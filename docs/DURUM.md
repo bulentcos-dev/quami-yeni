@@ -578,6 +578,30 @@ yazılmadı; her şey ortak bileşenler ve ortak yerleşim sınıflarıyla kurul
 - README'de yeni makine uyarısı: bağlantı dizesindeki kullanıcı adı makineye
   göre değişir, düzeltilmesi gerekir.
 
+## Ayarlar ve gizli değerler (17 Eylül 2026)
+
+Depo GitHub'a gönderilmeden önce gizli değerler ayıklandı ve **geçmiş yeniden
+yazıldı**. Şu an depoda parola, API anahtarı veya gerçek bağlantı dizesi yok.
+
+- `appsettings.Development.json` dosyaları artık **depoda değil**; `.gitignore`
+  içindeler. Yanlarında `.example` şablonları var, yeni makinede kopyalanıp
+  doldurulacak.
+- Kodda **varsayılan parola ve varsayılan API anahtarı yok**. Ayar verilmezse
+  örnek kullanıcının giriş kaydı açılmaz (açılışta günlüğe yazılır) ve API'nin
+  korumalı uçları 401 döner.
+- Tasarım zamanı bağlantısı `QUAMI_DB` ortam değişkeninden okunur; yoksa
+  makinedeki oturum adından yerel bir varsayılan üretilir. Gömülü ad yok.
+- Bu makinede geliştirme değerleri **kullanıcı gizli deposunda** (user secrets):
+  `Seed:SampleUserPassword` (Web) ve `Api:Keys:python-ai` (Api). Kurulum ve
+  komutlar README'nin **Ayarlar** bölümünde.
+- Geçmiş `git filter-repo` ile temizlendi: iki ayar dosyası tüm commit'lerden
+  silindi, kalan dizeler yer tutucularla değiştirildi. Commit yapısı ve
+  mesajları korundu; **commit kimlikleri değişti**.
+- Uzak depo: `https://github.com/bulentcos-dev/quami-yeni.git` (özel).
+
+**Kural:** parola, anahtar veya bağlantı dizesini bir daha depoya yazmayın.
+Geliştirme değerleri gizli depoya, test ve canlı değerleri ortam değişkenlerine.
+
 ## Açık kararlar (Bülent'e ait)
 
 - Modül içleri birebir mi taşınsın, arayüz de tazelensin mi (iş kuralı sabit)?
